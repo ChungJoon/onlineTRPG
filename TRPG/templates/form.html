@@ -1,0 +1,19 @@
+<!-- form.html -->
+{% extends "base.html" %}
+{% block title %}ログインフォーム{% endblock %}
+{% block content %}
+<h1>ログインフォーム</h1>
+{% if message %}
+    <p style="color: red;">{{ message }}</p>
+{% endif %}
+<form method="POST" action="/">
+    <label for="id">ユーザーID:</label>
+    <input type="text" id="id" name="id"><br><br>
+    <label for="pwd">パスワード:</label>
+    <input type="password" id="pwd" name="pwd"><br><br>
+    
+    <button type="submit" name="action" value="login">ログイン</button>
+    <button type="submit" name="action" value="register">登録</button>
+    <button type="submit" name="action" value="forgot_password">パスワードを忘れた</button>
+</form>
+{% endblock %}

@@ -1,0 +1,56 @@
+<!-- base.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}ページ{% endblock %}</title>
+    <style>
+        /* ナビゲーションタブのスタイル */
+        .navbar {
+            width: 200px;
+            position: fixed;
+            left: 0;
+            top: 50px;
+            background-color: #f1f1f1;
+            padding: 10px;
+            height: 100%; /* タブをページ全体の高さに伸ばす */
+            box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* タブの右に影を追加 */
+        }
+        .navbar a {
+            display: block;
+            padding: 8px 16px; /* 内側の余白を調整 */
+            text-decoration: none;
+            color: black;
+            margin-bottom: 10px;
+            border-left: 4px solid transparent; /* アクティブ状態のインジケータを追加 */
+        }
+        .navbar a:hover {
+            background-color: #ddd;
+        }
+        .navbar a.active {
+            background-color: #007bff; /* アクティブリンクの背景色 */
+            color: white;
+            border-left: 4px solid #0056b3; /* アクティブ状態のインジケータ */
+        }
+        .content {
+            margin-left: 220px; /* ナビゲーションタブの幅に応じてコンテンツの左マージンを調整 */
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <!-- ナビゲーションタブ -->
+    <div class="navbar">
+        <a href="{{ url_for('home') }}" class="{% if request.path == '/home' %}active{% endif %}">ホーム</a>
+        <a href="{{ url_for('profile') }}" class="{% if request.path == '/profile' %}active{% endif %}">プロフィール</a>
+        <a href="{{ url_for('settings') }}" class="{% if request.path == '/settings' %}active{% endif %}">設定</a>
+        <a href="{{ url_for('form') }}" class="{% if request.path == '/' %}active{% endif %}">ログインフォーム</a>
+        <a href="{{ url_for('command') }}" class="{% if request.path == '/command' %}active{% endif %}">コマンド実行</a>
+    </div>
+
+    <!-- コンテンツ -->
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
