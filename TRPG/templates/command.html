@@ -1,53 +1,35 @@
-<!-- command.html -->
 {% extends "base.html" %}
-{% block title %}コマンド実行{% endblock %}
+
+{% block title %}
+Command Execution
+{% endblock %}
+
 {% block content %}
-<h1>コマンド実行</h1>
-<form id="commandForm" method="POST" action="/command">
-    <label for="command_input">コマンドを入力:</label><br>
-    <input type="text" id="command_input" name="command_input"><br><br>
-    <button type="submit">実行</button>
-</form>
-
-<hr>
-
-<!-- コマンドのログ出力エリア -->
-<div id="commandOutput">
-    {% if command_logs %}
+<div class="container mt-4" style="max-width: 80%;">
+    <h2>Command Execution</h2>
+    <form method="post" action="{{ url_for('command', character_id=character.id) }}">
+        <div class="mb-3">
+            <label for="code_input" class="form-label">Enter your command:</label>
+            <input type="textarea" id="code_input" name="code_input" class="form-control" rows="10" placeholder="Enter commands here...e.g., a=dice(2,6); ifmore($a,10)" style="width: 100%;">
+        </div>
+        <button type="submit" class="btn btn-primary">Execute</button>
+    </form>
+    
+    <hr>
+    
+    <h3>Command Logs</h3>
+    <div id="command-logs" class="bg-light p-3" style="height: 300px; overflow-y: scroll; border: 1px solid #ccc;">
         {% for log in command_logs %}
             <p>{{ log }}</p>
         {% endfor %}
-    {% endif %}
+    </div>
+    
+    <hr>
+    
+    <h3>Last Result</h3>
+    <div id="command-result" class="bg-light p-3" style="border: 1px solid #ccc;">
+        <p>{{ result }}</p>
+    </div>
 </div>
-
-<script>
-    // コマンド実行フォームのサブミットを監視
-    document.getElementById('commandForm').addEventListener('submit', function(event) {
-        event.preventDefault();  // デフォルトのフォーム送信を防止
-        
-        // フォームデータを取得
-        var formData = new FormData(this);
-        
-        // AJAXリクエストを送信
-        fetch('/command', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.text())
-        .then(data => {
-            // 受け取ったデータ（コマンドログ）をログ出力エリアに追加
-            var commandOutput = document.getElementById('commandOutput');
-            var newLog = document.createElement('p');
-            newLog.textContent = data;
-            commandOutput.appendChild(newLog);
-            
-            // 入力フィールドをクリア
-            document.getElementById('command_input').value = '';
-        })
-        .catch(error => {
-            console.error('Error:', error);
-        });
-    });
-</script>
-
 {% endblock %}
+profile
