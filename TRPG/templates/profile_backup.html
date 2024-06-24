@@ -22,6 +22,19 @@
             padding-left: 5px;
             padding-right: 5px;
         }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+        th {
+            background-color: #6283c2;
+        }
         .btn {
             margin-top: 1px;
         }
@@ -429,6 +442,119 @@
 	<br>
 	<br>
 	
+	<!-- 武器セクション -->
+	<h3>武器 (変更可能)</h3>
+	<button type="button" class="btn btn-primary" onclick="addWeapon()">行追加</button>
+	<table>
+	    <thead>
+	        <tr>
+	            <th style="width: 20%;">名前</th>
+	            <th style="width: 12%;">武器種</th>
+	            <th style="width: 8%;">タイプ</th>
+	            <th style="width: 8%;">ランク</th>
+	            <th style="width: 8%;">重量</th>
+	            <th style="width: 8%;">命中</th>
+	            <th style="width: 8%;">威力</th>
+	            <th style="width: 8%;">追加点</th>
+	            <th style="width: 12%;">備考</th>
+	            <th style="width: 8%;">操作</th>
+	        </tr>
+	    </thead>
+	    <tbody id="items-tbody-weapon">
+	        {% for weapon in weapons %}
+	        <tr>
+	            <td><input type="text" name="weapon_{{ weapon.id }}_name" value="{{ weapon.name }}" class="form-control"></td>
+	            <td>
+	                <select name="weapon_{{ weapon.id }}_category" class="form-control">
+	                    {% for category in weapon_categories %}
+	                    <option value="{{ category }}" {% if weapon.category == category %}selected{% endif %}>{{ category }}</option>
+	                    {% endfor %}
+	                </select>
+	            </td>
+	            <td><input type="text" name="weapon_{{ weapon.id }}_type" value="{{ weapon.type }}" class="form-control"></td>
+	            <td><input type="text" name="weapon_{{ weapon.id }}_rank" value="{{ weapon.rank }}" class="form-control"></td>
+	            <td><input type="number" name="weapon_{{ weapon.id }}_weight" value="{{ weapon.weight }}" class="form-control"></td>
+	            <td><input type="number" name="weapon_{{ weapon.id }}_aim" value="{{ weapon.aim }}" class="form-control"></td>
+	            <td><input type="number" name="weapon_{{ weapon.id }}_power" value="{{ weapon.power }}" class="form-control"></td>
+	            <td><input type="number" name="weapon_{{ weapon.id }}_damage" value="{{ weapon.damage }}" class="form-control"></td>
+	            <td><input type="text" name="weapon_{{ weapon.id }}_explain" value="{{ weapon.explain }}" class="form-control"></td>
+	            <td>
+	                <button type="button" class="btn btn-success" onclick="submitRow(this, '{{ url_for('edit_weapon', character_id=character.id, weapon_id=weapon.id) }}')">登録</button>
+	                <button type="button" class="btn btn-danger" onclick="submitRow(this, '{{ url_for('delete_weapon', character_id=character.id, weapon_id=weapon.id) }}')">削除</button>
+	            </td>
+	        </tr>
+	        {% endfor %}
+	    </tbody>
+	</table>
+
+	<!-- 防具セクション -->
+	<h3>防具 (変更可能)</h3>
+	<button type="button" class="btn btn-primary" onclick="addProtector()">行追加</button>
+	<table>
+	    <thead>
+	        <tr>
+	            <th style="width: 20%;">名前</th>
+	            <th style="width: 12%;">種類</th>
+	            <th style="width: 8%;">防護点</th>
+	            <th style="width: 8%;">重量</th>
+	            <th style="width: 8%;">回避力</th>
+	            <th style="width: 8%;">命中力</th>
+	            <th style="width: 20%;">説明</th>
+	            <th style="width: 16%;">操作</th>
+	        </tr>
+	    </thead>
+	    <tbody id="items-tbody-protector">
+	        {% for protector in protectors %}
+	        <tr>
+	            <td><input type="text" name="protector_{{ protector.id }}_name" value="{{ protector.name }}" class="form-control"></td>
+	            <td><input type="text" name="protector_{{ protector.id }}_type" value="{{ protector.type }}" class="form-control"></td>
+	            <td><input type="number" name="protector_{{ protector.id }}_defense" value="{{ protector.defense }}" class="form-control"></td>
+	            <td><input type="number" name="protector_{{ protector.id }}_weight" value="{{ protector.weight }}" class="form-control"></td>
+	            <td><input type="number" name="protector_{{ protector.id }}_evasion" value="{{ protector.evasion }}" class="form-control"></td>
+	            <td><input type="number" name="protector_{{ protector.id }}_accuracy" value="{{ protector.accuracy }}" class="form-control"></td>
+	            <td><input type="text" name="protector_{{ protector.id }}_explain" value="{{ protector.explain }}" class="form-control"></td>
+	            <td>
+	                <button type="button" class="btn btn-success" onclick="submitRow(this, '{{ url_for('edit_protector', character_id=character.id, protector_id=protector.id) }}')">登録</button>
+	                <button type="button" class="btn btn-danger" onclick="submitRow(this, '{{ url_for('delete_protector', character_id=character.id, protector_id=protector.id) }}')">削除</button>
+	            </td
+	        </tr>>
+	        {% endfor %}
+	    </tbody>
+	</table>
+	
+	<!-- Item情報 -->
+	<h3>アイテム (変更可能)</h3>
+	<text>登録ボタンを押すとページが更新されるので入力は1行ずつ行ってください。</text><br>
+    <button type="button" class="btn btn-primary" onclick="addItem()">行追加</button>
+	<table>
+	    <thead>
+	        <tr>
+	            <th style="width: 20%;">名前</th>
+	            <th style="width: 10%;">タイプ</th>
+	            <th style="width: 10%;">個数</th>
+	            <th style="width: 25%;">説明</th>
+	            <th style="width: 20%;">コマンド</th>
+	            <th style="width: 15%;">操作</th>
+	        </tr>
+	    </thead>
+	    <tbody id="items-tbody-item">
+	        {% for item in items %}
+	        <tr>
+	            <td><input type="text" name="item_{{ item.id }}_name" value="{{ item.name }}" class="form-control"></td>
+	            <td><input type="text" name="item_{{ item.id }}_type" value="{{ item.type }}" class="form-control"></td>
+	            <td><input type="number" name="item_{{ item.id }}_num" value="{{ item.num }}" class="form-control"></td>
+	            <td><input type="text" name="item_{{ item.id }}_explain" value="{{ item.explain }}" class="form-control"></td>
+	            <td><input type="text" name="item_{{ item.id }}_command" value="{{ item.command }}" class="form-control"></td>
+	            <td>
+	                <button type="button" class="btn btn-success" onclick="submitRow(this, '{{ url_for('edit_item', character_id=character.id, item_id=item.id) }}')">登録</button>
+	                <button type="button" class="btn btn-danger" onclick="submitRow(this, '{{ url_for('delete_item', character_id=character.id, item_id=item.id) }}')">削除</button>
+	            </td>
+	        </tr>
+	        {% endfor %}
+	    </tbody>
+	</table>
+	
+	
 </div>
 {% endblock %}
 
@@ -437,6 +563,98 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 <script>
+	// 事前に生成された選択肢リスト
+    const weaponCategoriesOptions = `
+        {% for category in weapon_categories %}
+        <option value="{{ category }}">{{ category }}</option>
+        {% endfor %}
+    `;
+	
+	function addItem() {
+	    const tbody = document.querySelector('#items-tbody-item');
+	    const newRow = document.createElement('tr');
+	    newRow.innerHTML = `
+	        <td><input type="text" name="new_item_name[]" placeholder="名前" class="form-control"></td>
+	        <td><input type="text" name="new_item_type[]" placeholder="タイプ" class="form-control"></td>
+	        <td><input type="number" name="new_item_num[]" placeholder="個数" class="form-control"></td>
+	        <td><input type="text" name="new_item_explain[]" placeholder="説明" class="form-control"></td>
+	        <td><input type="text" name="new_item_command[]" placeholder="コマンド" class="form-control"></td>
+	        <td>
+	            <button type="button" class="btn btn-success" onclick="submitRow(this, '{{ url_for('add_item', character_id=character.id) }}')">登録</button>
+	            <button type="button" class="btn btn-danger" onclick="removeRow(this)">削除</button>
+	        </td>
+	    `;
+	    tbody.appendChild(newRow);
+	}
+	
+	function addWeapon() {
+	    const tbody = document.querySelector('#items-tbody-weapon');
+	    const newRow = document.createElement('tr');
+	    newRow.innerHTML = `
+	        <td><input type="text" name="new_weapon_name[]" placeholder="名前" class="form-control"></td>
+	        <td>
+                <select name="new_weapon_category[]" class="form-control">
+                    ${weaponCategoriesOptions}
+                </select>
+            </td>
+	        <td><input type="text" name="new_weapon_type[]" placeholder="タイプ" class="form-control"></td>
+	        <td><input type="number" name="new_weapon_rank[]" placeholder="ランク" class="form-control"></td>
+	        <td><input type="number" name="new_weapon_weight[]" placeholder="重量" class="form-control"></td>
+	        <td><input type="number" name="new_weapon_aim[]" placeholder="命中" class="form-control"></td>
+	        <td><input type="number" name="new_weapon_power[]" placeholder="威力" class="form-control"></td>
+	        <td><input type="text" name="new_weapon_damage[]" placeholder="追加点" class="form-control"></td>
+	        <td><input type="text" name="new_weapon_explain[]" placeholder="説明" class="form-control"></td>
+	        <td>
+	            <button type="button" class="btn btn-success" onclick="submitRow(this, '{{ url_for('add_weapon', character_id=character.id) }}')">登録</button>
+	            <button type="button" class="btn btn-danger" onclick="removeNewItem(this)">削除</button>
+	        </td>
+	    `;
+
+	    tbody.appendChild(newRow);
+	}
+
+	function addProtector() {
+	    const tbody = document.querySelector('#items-tbody-protector');
+	    const newRow = document.createElement('tr');
+	    newRow.innerHTML = `
+	        <td><input type="text" name="new_protector_name[]" placeholder="名前" class="form-control"></td>
+	        <td><input type="number" name="new_protector_type[]" placeholder="種類" class="form-control"></td>
+	        <td><input type="number" name="new_protector_defense[]" placeholder="防護点" class="form-control"></td>
+	        <td><input type="number" name="new_protector_weight[]" placeholder="重量" class="form-control"></td>
+	        <td><input type="number" name="new_protector_evasion[]" placeholder="回避力" class="form-control"></td>
+	        <td><input type="number" name="new_protector_accuracy[]" placeholder="命中力" class="form-control"></td>
+	        <td><input type="text" name="new_protector_explain[]" placeholder="説明" class="form-control"></td>
+	        <td>
+	            <button type="button" class="btn btn-success" onclick="submitRow(this, '{{ url_for('add_protector', character_id=character.id) }}')">登録</button>
+	            <button type="button" class="btn btn-danger" onclick="removeNewItem(this)">削除</button>
+	        </td>
+	    `;
+
+	    tbody.appendChild(newRow);
+	}
+	
+	function removeRow(button) {
+	    const row = button.closest('tr');
+	    if (row) {
+	        row.remove();
+	    }
+	}
+
+	function submitRow(button, actionUrl) {
+	    const form = document.createElement('form');
+	    form.method = 'POST';
+	    form.action = actionUrl;
+	    const row = button.closest('tr');
+	    if (row) {
+	        const inputs = row.querySelectorAll('input');
+	        inputs.forEach(input => {
+	            form.appendChild(input.cloneNode(true));
+	        });
+	        document.body.appendChild(form);
+	        form.submit();
+	    }
+	}
+	
 	// スキル名のリストを定義
     const skillOptions = {
         '物理': ['ファイター', 'グラップラー', 'フェンサー', 'シューター'],

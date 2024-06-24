@@ -301,3 +301,43 @@ class Item(db.Model):
     type = db.Column(db.String(45), nullable=True)
     explain = db.Column(db.String(45), nullable=True)
     command = db.Column(db.String(45), nullable=True)
+
+class Weapon(db.Model):
+    __tablename__ = 'Weapon'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    related_id = db.Column(db.Integer, db.ForeignKey('Character.id'), nullable=True)
+    name = db.Column(db.String(45), nullable=False)
+    type = db.Column(db.String(45), nullable=True)
+    category = db.Column(db.String(45), nullable=True)
+    actual = db.Column(db.String(10), nullable=True)
+    rank = db.Column(db.String(5), nullable=True)
+    using = db.Column(db.String(10), nullable=True)
+    weight = db.Column(db.Integer, default=0)
+    aim = db.Column(db.Integer, default=0)
+    power = db.Column(db.Integer, default=0)
+    critical = db.Column(db.Integer, default=10)
+    damage = db.Column(db.Integer, default=0)
+    explain = db.Column(db.String(950), nullable=True)
+    command = db.Column(db.String(45), nullable=True)
+    effect = db.Column(db.String(90), nullable=True)
+
+    def __repr__(self):
+        return f'<Weapon {self.name}>'
+    
+class Protector(db.Model):
+    __tablename__ = 'Protector'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    related_id = db.Column(db.Integer, db.ForeignKey('Character.id'), nullable=True)
+    name = db.Column(db.String(45), nullable=False)
+    defense = db.Column(db.Integer, default=0)
+    weight = db.Column(db.Integer, nullable=True)
+    evasion = db.Column(db.Integer, default=0)
+    accuracy = db.Column(db.Integer, default=0)
+    type = db.Column(db.String(45), nullable=True)
+    explain = db.Column(db.String(90), nullable=True)
+    command = db.Column(db.String(45), nullable=True)
+
+    def __repr__(self):
+        return f'<Protector {self.name}>'

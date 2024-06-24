@@ -45,6 +45,7 @@
         <a href="{{ url_for('home', character_id=character.id) }}" class="{% if request.path == '/home' %}active{% endif %}">ホーム</a>
         <a href="{{ url_for('login2', character_id=character.id) }}" class="{% if request.path == '/login' %}active{% endif %}">ログインフォーム</a>
         <a href="{{ url_for('profile', character_id=character.id)}}" class="{% if request.path == '/profile' %}active{% endif %}">プロフィール</a>
+        <a href="{{ url_for('items', character_id=character.id)}}" class="{% if request.path == '/items' %}active{% endif %}">装備</a>
         <a href="{{ url_for('settings', character_id=character.id) }}" class="{% if request.path == '/settings' %}active{% endif %}">設定</a>
         <a href="{{ url_for('command', character_id=character.id) }}" class="{% if request.path == '/command' %}active{% endif %}">コマンド実行</a>
     </div>

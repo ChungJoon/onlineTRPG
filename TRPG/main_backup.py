@@ -94,7 +94,7 @@ def home(character_id):
 
 @app.route('/profile/<int:character_id>', methods=['GET', 'POST'])
 def profile(character_id):
-    from dataclass import Character,Status,Job
+    from dataclass import Character,Status,Skills,Item,Job,Weapon,Protector
     character = Character.query.get_or_404(character_id)
     # status = Status.query.filter_by(related_id=character.id).first()
     status = character.GetStatus()
@@ -111,6 +111,13 @@ def profile(character_id):
             skills_magic.append(skill)
         else:
             skills_other.append(skill)
+
+    # Item情報を取得
+    weapons = Weapon.query.filter_by(related_id=character.id).all()
+    # Item情報を取得
+    protectors = Protector.query.filter_by(related_id=character.id).all()
+    # Item情報を取得
+    items = Item.query.filter_by(related_id=character.id).all()
     
     if request.method == 'POST':
         # POSTリクエスト処理、フォームのデータを取得し、必要な操作を実行する
@@ -149,7 +156,8 @@ def profile(character_id):
 
     return render_template('profile.html', character=character, status=status,
                            skills_physical=skills_physical, skills_magic=skills_magic,
-                           skills_other=skills_other)
+                           skills_other=skills_other, items=items, weapons=weapons,
+                           protectors=protectors, weapon_categories=WEAPON_CATEGORIES)
 
 
 @app.route('/add_job/<int:character_id>', methods=['POST'])
@@ -174,7 +182,6 @@ def add_job(character_id):
 
     return redirect(url_for('profile', character_id=character_id))
 
-
 @app.route('/edit_skill/<int:character_id>/<int:skill_id>', methods=['POST'])
 def edit_skill(character_id, skill_id):
     from dataclass import Character,Job
@@ -193,7 +200,6 @@ def edit_skill(character_id, skill_id):
     # 削除後にリダイレクトする
     return redirect(url_for('profile', character_id=character_id,skill_id=skill_id))
 
-
 @app.route('/delete_skill/<int:character_id>/<int:skill_id>', methods=['POST'])
 def delete_skill(character_id, skill_id):
     from dataclass import Character,Job
@@ -209,23 +215,6 @@ def delete_skill(character_id, skill_id):
     # 削除後にリダイレクトする
     return redirect(url_for('profile', character_id=character_id,skill_id=skill_id))
 
-
-@app.route('/items/<int:character_id>', methods=['GET', 'POST'])
-def items(character_id):
-    from dataclass import Character,Item,Weapon,Protector
-    character = Character.query.get_or_404(character_id)
-    # Item情報を取得
-    weapons = Weapon.query.filter_by(related_id=character.id).all()
-    # Item情報を取得
-    protectors = Protector.query.filter_by(related_id=character.id).all()
-    # Item情報を取得
-    items = Item.query.filter_by(related_id=character.id).all()
-
-    return render_template('items.html', character=character,items=items, weapons=weapons,
-                           protectors=protectors, weapon_categories=WEAPON_CATEGORIES)
-
-
-
 @app.route('/add_item/<int:character_id>', methods=['POST'])
 def add_item(character_id):
     from dataclass import Character,Item
@@ -236,7 +225,7 @@ def add_item(character_id):
         item_num = request.form.get('new_item_num[]')
         item_explain = request.form.get('new_item_explain[]')
         item_command = request.form.get('new_item_command[]')
-
+        print(item_name)
         new_item = Item(
             related_id=character_id,
             name=item_name,
@@ -250,7 +239,7 @@ def add_item(character_id):
         db.session.commit()
 
     # 追加後にリダイレクトする
-    return redirect(url_for('items', character_id=character_id))
+    return redirect(url_for('profile', character_id=character_id))
 
 @app.route('/edit_item/<int:character_id>/<int:item_id>', methods=['POST'])
 def edit_item(character_id, item_id):
@@ -258,26 +247,33 @@ def edit_item(character_id, item_id):
 
     if request.method == 'POST':
         item = Item.query.get(item_id)
+        print('item_id:'+str(item_id))
 
         items = request.form
         for key, value in items.items():
             if key.startswith("item_") and key.endswith("_name"):
                 select_item_id = int(key.split("_")[1])
-                item.name = value
+                item_name = str(value)
             elif key.startswith("item_") and key.endswith("_type"):
-                item.type = value
+                item_type = str(value)
             elif key.startswith("item_") and key.endswith("_num"):
-                item.num = value
+                item_num = int(value)
             elif key.startswith("item_") and key.endswith("_explain"):
-                item.explain = value
+                item_explain = str(value)
             elif key.startswith("item_") and key.endswith("_command"):
-                item.command = value
+                item_command = str(value)
+
+        item.name = item_name
+        item.type=item_type,
+        item.num=item_num,
+        item.explain=item_explain,
+        item.command=item_command
 
         db.session.add(item)
         db.session.commit()
 
     # 編集後にリダイレクトする
-    return redirect(url_for('items', character_id=character_id,item_id=item_id))
+    return redirect(url_for('profile', character_id=character_id,item_id=item_id))
 
 @app.route('/delete_item/<int:character_id>/<int:item_id>', methods=['POST'])
 def delete_item(character_id, item_id):
@@ -290,7 +286,7 @@ def delete_item(character_id, item_id):
         db.session.commit()
 
     # 編集後にリダイレクトする
-    return redirect(url_for('items', character_id=character_id,item_id=item_id))
+    return redirect(url_for('profile', character_id=character_id,item_id=item_id))
 
 
 @app.route('/add_weapon/<int:character_id>', methods=['POST'])
@@ -298,25 +294,20 @@ def add_weapon(character_id):
     from dataclass import Character,Weapon
     if request.method == 'POST':
         item_name = request.form.get('new_weapon_name[]')
-        item_category = request.form.get('new_weapon_category[]')
+        item_type = request.form.get('new_weapon_category[]')
         item_type = request.form.get('new_weapon_type[]')
         item_weight = request.form.get('new_weapon_weight[]')
         item_aim = request.form.get('new_weapon_aim[]')
         item_power = request.form.get('new_weapon_power[]')
-        item_damage = request.form.get('new_weapon_damage[]')
-        item_critical = request.form.get('new_weapon_critical[]')
         item_explain = request.form.get('new_weapon_explain[]')
         item_command = request.form.get('new_weapon_command[]')
 
         new_weapon = Weapon(
             name=item_name,
-            category=item_category,
             type=item_type,
             weight=item_weight,
             aim=item_aim,
             power=item_power,
-            damage=item_damage,
-            critical=item_critical,
             explain=item_explain,
             command=item_command,
             related_id=character_id
@@ -325,7 +316,7 @@ def add_weapon(character_id):
         db.session.add(new_weapon)
         db.session.commit()
 
-    return redirect(url_for('items', character_id=character_id))
+    return redirect(url_for('profile', character_id=character_id))
 
 @app.route('/edit_weapon/<int:character_id>/<int:weapon_id>', methods=['POST'])
 def edit_weapon(character_id, weapon_id):
@@ -336,34 +327,41 @@ def edit_weapon(character_id, weapon_id):
 
         items = request.form
         for key, value in items.items():
-            print(key)
             if key.startswith("weapon_") and key.endswith("_name"):
                 select_item_id = int(key.split("_")[1])
-                item.name = value
+                item_name = str(value)
             elif key.startswith("weapon_") and key.endswith("_category"):
-                item.category = value
+                item_category = str(value)
             elif key.startswith("weapon_") and key.endswith("_type"):
-                item.type = value
+                item_type = str(value)
             elif key.startswith("weapon_") and key.endswith("_rank"):
-                item.rank = value
+                item_rank = str(value)
             elif key.startswith("weapon_") and key.endswith("_weight"):
-                item.weight = value
+                item_weight = int(value)
             elif key.startswith("weapon_") and key.endswith("_power"):
-                item.power = value
+                item_power = int(value)
             elif key.startswith("weapon_") and key.endswith("_aim"):
-                item.aim = value
-            elif key.startswith("weapon_") and key.endswith("_critical"):
-                item.critical = value
+                item_aim = int(value)
             elif key.startswith("weapon_") and key.endswith("_damage"):
-                item.damage = value
+                item_damage = int(value)
             elif key.startswith("weapon_") and key.endswith("_explain"):
-                item.explain = value
+                item_explain = str(value)
+
+        item.name = item_name
+        item.category=item_category
+        item.type=item_type
+        item.rank=item_rank
+        item.weight=item_weight
+        item.power=item_power
+        item.aim=item_aim
+        item.damage=item_damage
+        item.explain=item_explain
 
         db.session.add(item)
         db.session.commit()
 
     # 編集後にリダイレクトする
-    return redirect(url_for('items', character_id=character_id,weapon_id=weapon_id))
+    return redirect(url_for('profile', character_id=character_id,weapon_id=weapon_id))
 
 @app.route('/delete_weapon/<int:character_id>/<int:weapon_id>', methods=['POST'])
 def delete_weapon(character_id, weapon_id):
@@ -376,7 +374,7 @@ def delete_weapon(character_id, weapon_id):
         db.session.commit()
 
     # 編集後にリダイレクトする
-    return redirect(url_for('items', character_id=character_id,weapon_id=weapon_id))
+    return redirect(url_for('profile', character_id=character_id,weapon_id=weapon_id))
 
 @app.route('/add_protector/<int:character_id>', methods=['POST'])
 def add_protector(character_id):
@@ -404,7 +402,7 @@ def add_protector(character_id):
         db.session.add(new_protector)
         db.session.commit()
 
-    return redirect(url_for('items', character_id=character_id))
+    return redirect(url_for('profile', character_id=character_id))
 
 @app.route('/edit_protector/<int:character_id>/<int:protector_id>', methods=['POST'])
 def edit_protector(character_id, protector_id):
@@ -417,25 +415,36 @@ def edit_protector(character_id, protector_id):
         for key, value in items.items():
             if key.startswith("protector_") and key.endswith("_name"):
                 select_item_id = int(key.split("_")[1])
-                item.name = value
+                item_name = str(value)
             elif key.startswith("protector_") and key.endswith("_type"):
-                item.type = value
+                item_type = str(value)
             elif key.startswith("protector_") and key.endswith("_weight"):
-                item.weight = value
+                item_weight = int(value)
             elif key.startswith("protector_") and key.endswith("_defense"):
-                item.defense = value
+                item_defense = int(value)
             elif key.startswith("protector_") and key.endswith("_evasion"):
-                item.evasion = value
+                item_evasion = int(value)
             elif key.startswith("protector_") and key.endswith("_accuracy"):
-                item.accuracy = value
+                item_accuracy = int(value)
             elif key.startswith("protector_") and key.endswith("_explain"):
-                item.explain = value
+                item_explain = str(value)
+            elif key.startswith("protector_") and key.endswith("_command"):
+                item_command = str(value)
+
+        item.name = item_name
+        item.type=item_type
+        item.defense=item_defense
+        item.weight=item_weight
+        item.evasion=item_evasion
+        item.accuracy=item_accuracy
+        item.explain=item_explain
+        item.command=item_command
 
         db.session.add(item)
         db.session.commit()
 
     # 編集後にリダイレクトする
-    return redirect(url_for('items', character_id=character_id,protector_id=protector_id))
+    return redirect(url_for('profile', character_id=character_id,protector_id=protector_id))
 
 @app.route('/delete_protector/<int:character_id>/<int:protector_id>', methods=['POST'])
 def delete_protector(character_id, protector_id):
@@ -448,7 +457,7 @@ def delete_protector(character_id, protector_id):
         db.session.commit()
 
     # 編集後にリダイレクトする
-    return redirect(url_for('items', character_id=character_id,protector_id=protector_id))
+    return redirect(url_for('profile', character_id=character_id,protector_id=protector_id))
 
 
 @app.route("/settings/<int:character_id>")
