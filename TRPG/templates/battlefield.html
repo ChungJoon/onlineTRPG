@@ -1,0 +1,706 @@
+<!-- home.html -->
+{% extends "base.html" %}
+{% block title %}{{ character.name }}バトルフィールド{% endblock %}
+{% block style %}  
+        /* 光沢のあるシルバーの効果 */
+        .shiny-silver-text {
+            background: linear-gradient(45deg, #e0e0e0, #ffffff, #b0b0b0, #d0d0d0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            font-weight: bold;
+        }
+
+        /* 味方陣営の色 */
+        .friend-text {
+            color: #3b82f6; /* Tailwind CSSのblue-500 */
+        }
+
+        /* 敵陣営の色 */
+        .enemy-text {
+            color: #ef4444; /* Tailwind CSSのred-500 */
+        }
+
+        /* ドラッグ可能な要素のスタイル */
+        .draggable {
+            cursor: move;
+        }
+
+        /* ドラッグオーバー時のスタイル */
+        .droppable {
+            border: 2px dashed #4a5568;
+        }
+        
+		/* style.css */
+
+		.hidden {
+		    display: none;
+		}
+
+		.fixed {
+		    position: fixed;
+		}
+
+		.z-10 {
+		    z-index: 10;
+		}
+
+		.inset-0 {
+		    top: 0;
+		    right: 0;
+		    bottom: 0;
+		    left: 0;
+		}
+
+		.overflow-y-auto {
+		    overflow-y: auto;
+		}
+
+		.flex {
+		    display: flex;
+		}
+
+		.items-center {
+		    align-items: center;
+		}
+
+		.justify-center {
+		    justify-content: center;
+		}
+
+		.min-h-screen {
+		    min-height: 100vh;
+		}
+
+		.bg-white {
+		    background-color: #ffffff;
+		}
+
+		.p-4 {
+		    padding: 1rem;
+		}
+
+		.rounded-lg {
+		    border-radius: 0.5rem;
+		}
+
+		.shadow-lg {
+		    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+		}
+		/* ドラッグ中のユニット */
+		.unit.dragging {
+		    opacity: 0.5;
+		    border: 2px dashed #aaa; /* ドラッグ中の境界線 */
+		}
+
+		/* ドロップ可能エリアの通常状態 */
+		.droppable-area {
+		    border: 2px dashed transparent; /* 初期状態で透明な境界線 */
+		    transition: background-color 0.3s, border-color 0.3s;
+		    min-height: 150px; /* 高さを確保 */
+		    padding: 10px; /* パディングを追加して内容を内側に */
+		}	
+		
+		/* ドロップ可能エリアにドラッグ中のユニットが重なったとき */
+		.droppable-area.drag-over {
+		    border-color: #00ff00; /* ドラッグオーバー時の境界線の色 */
+		    background-color: rgba(0, 255, 0, 0.1); /* 背景色 */
+		}
+		
+		 /* 結果表示エリアのスクロールスタイル */
+        #result-output {
+            max-height: 300px; /* 結果エリアの最大高さを指定 */
+            overflow-y: auto; /* 縦方向のスクロールを許可 */
+            padding: 10px; /* 内側の余白を追加 */
+            background-color: #2d3748; /* 背景色 */
+            border-radius: 8px; /* 角を丸める */
+            border: 1px solid #4a5568; /* ボーダーを追加 */
+        }
+
+{% endblock %}
+{% block content %}
+    <div class="container mx-auto p-4 text-gray-300">
+        <h1 class="text-4xl font-bold text-center mt-10 shiny-silver-text">バトルフィールド</h1>
+
+        <!-- ユニット選択セクション -->
+        <div class="flex justify-center mt-10 space-x-4">
+            <div>
+                <label for="unit-selection" class="block text-lg mb-2">ユニットを選択</label>
+                <select id="unit-selection" class="bg-gray-700 text-white p-2 rounded">
+                    <!-- ユニットのオプションをここに追加 -->
+                    {% for unit in units %}
+                        <option value="{{ unit.label }}">{{ unit.label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label for="position-selection" class="block text-lg mb-2">ポジションを選択</label>
+                <select id="position-selection" class="bg-gray-700 text-white p-2 rounded">
+                    <option value="前衛">前衛</option>
+                    <option value="中衛">中衛</option>
+                    <option value="後衛">後衛</option>
+                </select>
+            </div>
+            <div class="flex flex-col justify-center space-y-2">
+                <button id="add-to-friend" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">味方に追加</button>
+                <button id="add-to-enemy" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" >敵に追加</button>
+            </div>
+        </div>
+
+        <!-- バトルフィールド -->
+        <div class="justify-between mt-10 md:w-full lg:flex">
+            <!-- 味方陣営 -->
+            <div class="md:w-full lg:w-1/2 p-4 bg-gray-800 rounded-lg border border-gray-700 ml-2 mr-2">
+                <h3 class="text-2xl font-bold text-center friend-text">味方陣営</h3>
+                <div class="flex justify-between mt-4">
+                    <!-- 後衛 -->
+                    <div class="w-1/3">
+                        <h4 class="text-xl font-semibold text-center mb-2">後衛</h4>
+                        <div id="friend-back" class="space-y-2 droppable-area">
+                            <!-- ユニットが追加される場所 -->
+                        </div>
+                    </div>
+                    <!-- 中衛 -->
+                    <div class="w-1/3">
+                        <h4 class="text-xl font-semibold text-center mb-2">中衛</h4>
+                        <div id="friend-middle" class="space-y-2 droppable-area">
+                            <!-- ユニットが追加される場所 -->
+                        </div>
+                    </div>
+                    <!-- 前衛 -->
+                    <div class="w-1/3 ">
+                        <h4 class="text-xl font-semibold text-center mb-2">前衛</h4>
+                        <div id="friend-front" class="space-y-2 droppable-area">
+                            <!-- ユニットが追加される場所 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 敵陣営 -->
+            <div class="md:w-full lg:w-1/2 p-4 bg-gray-800 rounded-lg border border-gray-700 ml-2 mr-2">
+                <h3 class="text-2xl font-bold text-center enemy-text">敵陣営</h3>
+                <div class="flex justify-between mt-4">
+                    <!-- 前衛 -->
+                    <div class="w-1/3">
+                        <h4 class="text-xl font-semibold text-center mb-2">前衛</h4>
+                        <div id="enemy-front" class="space-y-2 droppable-area">
+                            <!-- ユニットが追加される場所 -->
+                        </div>
+                    </div>
+                    <!-- 中衛 -->
+                    <div class="w-1/3">
+                        <h4 class="text-xl font-semibold text-center mb-2">中衛</h4>
+                        <div id="enemy-middle" class="space-y-2 droppable-area">
+                            <!-- ユニットが追加される場所 -->
+                        </div>
+                    </div>
+                    <!-- 後衛 -->
+                    <div class="w-1/3">
+                        <h4 class="text-xl font-semibold text-center mb-2">後衛</h4>
+                        <div id="enemy-back" class="space-y-2 droppable-area">
+                            <!-- ユニットが追加される場所 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="flex justify-end">
+	        <button id="send-positions" class="btn btn-primary mt-4">バトルを開始</button>
+	        <div id="response" class="mt-4"></div>
+	    </div>
+		
+		<form id="command-form" method="POST" action="{{ url_for('battle_command',character_id=character.id) }}">
+		
+	        <div class="flex justify-center mt-10 space-x-4">
+	        	<div>
+	                <label for="actor-selection" class="block text-lg mb-2">行動者を選択</label>
+	                <select id="actor-selection" name="actor-selection" class="bg-gray-700 text-white p-2 rounded">
+	                    <!-- ターゲットのオプションをここに追加 -->
+	                    <option value="自分">自分</option>
+	                </select>
+	            </div>
+	            <div>
+	                <label for="target-selection" class="block text-lg mb-2">ターゲットを選択</label>
+	                <select id="target-selection" name="target-selection"  class="bg-gray-700 text-white p-2 rounded">
+	                    <!-- ターゲットのオプションをここに追加 -->
+	                </select>
+	            </div>
+	            <div>
+	                <label for="number-selection" class="block text-lg mb-2">数を選択</label>
+	                <select id="number-selection" class="bg-gray-700 text-white p-2 rounded">
+	                	<option value="count1">1</option>
+	                    <option value="count2">2</option>
+	                    <option value="count3">3</option>
+	                    <option value="count4">4</option>
+	                </select>
+	            </div>
+	        </div>
+        
+        <!-- コマンド入力エリア -->
+        	<div class="bg-gray-800 p-4 rounded shadow-md mb-4 mt-6">
+            	<h2 class="text-2xl font-bold text-yellow-300 mb-2">コマンド入力エリア</h2>
+                <div class="flex items-center mb-2">
+                    <input type="textarea" id="command-input" name="command-input" rows="2" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2" placeholder="コマンドを入力してください..."></textarea>
+                </div>
+                <div class="flex justify-between items-center">
+                	<div class="flex flex-col space-y-2">
+	                    <div class="flex items-center">
+                			<label for="user-label" class="block text-lg mb-2 mr-2">ユーザーコマンド:</label>
+		                    <select id="command-list" class="bg-gray-700 text-gray-200 rounded border border-gray-600 p-2 mr-4">
+		                        <option value="">コマンドを選択</option>
+		                        {% for command in user_commands %}
+		                            <option value="{{ command.command }}">{{ command.name }}</option>
+		                        {% endfor %}
+		                    </select>
+
+		                    <label for="public-label" class="block text-lg mb-2 mr-2">パブリックコマンド:</label>
+		                    <select id="public-command-list" class="bg-gray-700 text-gray-200 rounded border border-gray-600 p-2 mr-4">
+		                        <option value="">コマンドを選択</option>
+		                        {% for command in public_commands %}
+		                            <option value="{{ command.command }}">{{ command.name }}</option>
+		                        {% endfor %}
+		                    </select>
+	                    </div>
+	                </div>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">実行</button>
+                </div>
+        	</div>
+        </form>
+
+        <!-- コマンド結果表示エリア -->
+        <div id="command-result" class="bg-gray-800 p-4 rounded shadow-md">
+            <h2 class="text-2xl font-bold text-yellow-300 mb-2">コマンド結果</h2>
+            <div id="result-output" class="text-white">
+	            {% for log in battle_log %}
+	            <p> {{ log | e | safe }}</p>
+	            {% endfor %}
+            </div>
+        </div>
+        
+		<div id="unit-modal" class="hidden fixed z-10 inset-0 overflow-y-auto">
+		    <div class="flex items-center justify-center min-h-screen">
+		        <div class="bg-white p-4 rounded-lg shadow-lg">
+		            <h2 id="modal-title" class="text-2xl mb-4">ユニット詳細</h2>
+		            <p id="modal-content">ユニットの情報がここに表示されます。</p>
+		            {% for unit in units %}
+                            <div>{{ unit.name }}</div>
+                        {% endfor %}
+		            <button id="close-modal" class="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">閉じる</button>
+		        </div>
+		    </div>
+		</div>
+        
+    </div>
+{% endblock %}
+
+{% block script %}
+<script>
+    
+    document.getElementById('command-list').addEventListener('change', function() {
+	    var selectedCommand = this.value;
+	    var commandInput = document.getElementById('command-input');
+	    if (selectedCommand) {
+	        commandInput.value = selectedCommand;
+	    }
+	});
+	
+	document.getElementById('public-command-list').addEventListener('change', function() {
+	    var selectedCommand = this.value;
+	    var commandInput = document.getElementById('command-input');
+	    if (selectedCommand) {
+	        commandInput.value = selectedCommand;
+	    }
+	});
+
+
+	document.addEventListener('DOMContentLoaded', () => {
+  
+	    const unitSelection = document.getElementById('unit-selection');
+
+	    const addToFriendButton = document.getElementById('add-to-friend');
+	    const addToEnemyButton = document.getElementById('add-to-enemy');
+
+	    const friendFront = document.getElementById('friend-front');
+	    const friendMiddle = document.getElementById('friend-middle');
+	    const friendBack = document.getElementById('friend-back');
+	    const enemyFront = document.getElementById('enemy-front');
+	    const enemyMiddle = document.getElementById('enemy-middle');
+	    const enemyBack = document.getElementById('enemy-back');
+		
+		// 初期ユニットを配置する関数
+	    function initializeUnits() {
+	        //const friendFrontUnits = ["アデル", "ヒイロ"];
+	        //const friendBackUnits = ["ルキナ", "ティー", "フラン"];
+			const friendFrontUnits = {{ FriendFrontUnits|tojson }};
+			const friendMiddleUnits = {{ FriendMidleUnits|tojson }};
+            const friendBackUnits = {{ FriendBackUnits|tojson }};
+            const enemyFrontUnits = {{ EnemyFrontUnits|tojson }};
+            const enemyMiddleUnits = {{ EnemyMidleUnits|tojson }};
+            const enemyBackUnits = {{ EnemyBackUnits|tojson }};
+			
+			
+	        // 味方の前衛にユニットを追加
+	        friendFrontUnits.forEach(unit => addUnit(document.getElementById('friend-front'), unit));
+	        
+	        // 味方の前衛にユニットを追加
+	        friendMiddleUnits.forEach(unit => addUnit(document.getElementById('friend-middle'), unit));
+
+	        // 味方の後衛にユニットを追加
+	        friendBackUnits.forEach(unit => addUnit(document.getElementById('friend-back'), unit));
+	        
+	        // 敵の前衛にユニットを追加
+	        enemyFrontUnits.forEach(unit => addUnit(document.getElementById('enemy-front'), unit));
+	        
+	        // 敵の前衛にユニットを追加
+	        enemyMiddleUnits.forEach(unit => addUnit(document.getElementById('enemy-middle'), unit));
+
+	        // 敵の後衛にユニットを追加
+	        enemyBackUnits.forEach(unit => addUnit(document.getElementById('enemy-back'), unit));
+	    }
+
+	    // ドキュメントが完全にロードされた後に初期ユニットを配置
+	    initializeUnits();
+		
+		
+	    // ドラッグイベントの初期化
+	    function initializeDraggable(unitDiv) {
+	        unitDiv.addEventListener('dragstart', dragStart);
+	        unitDiv.addEventListener('dragend', dragEnd);
+	        unitDiv.addEventListener('dblclick', () => {
+	            unitDiv.remove();
+	            updateTargetSelection();
+	        });
+	    }
+		
+		// ドラッグイベントの開始時
+	    function dragStart(event) {
+	        const unitData = {
+	            name: event.target.textContent,
+	            id: event.target.dataset.id || generateUniqueId()
+	        };
+	        event.dataTransfer.setData('text', JSON.stringify(unitData));
+	        event.target.classList.add('opacity-50');
+	        event.target.dataset.id = unitData.id;
+	    }
+		
+		// ドラッグイベントの終了時
+	    function dragEnd(event) {
+	        event.target.classList.remove('opacity-50');
+	    }
+
+	    document.querySelectorAll('.droppable-area').forEach(area => {
+	        area.addEventListener('dragover', dragOver);
+	        area.addEventListener('drop', drop);
+	    });
+
+	    document.querySelectorAll('.draggable').forEach(draggable => {
+	        initializeDraggable(draggable);
+	    });
+		
+		// ドラッグオーバー
+	    function dragOver(event) {
+	        event.preventDefault();
+	        event.currentTarget.classList.add('droppable');
+	    }
+		
+		// ドロップ時
+	    function drop(event) {
+	        event.preventDefault();
+	        event.currentTarget.classList.remove('droppable');
+
+	        const unitData = JSON.parse(event.dataTransfer.getData('text'));
+	        const target = event.target;
+
+	        const existingUnit = document.querySelector(`.draggable[data-id="${unitData.id}"]`);
+	        if (existingUnit) {
+	            if (target.classList.contains('draggable')) {
+	                // 同じ枠内でユニットを移動する処理
+	                const dropPosition = determineDropPosition(target, event.clientY);
+	                if (dropPosition === 'before') {
+	                    target.parentNode.insertBefore(existingUnit, target);
+	                } else {
+	                    target.parentNode.insertBefore(existingUnit, target.nextSibling);
+	                }
+	            } else {
+	                // 別の枠に移動する処理
+	                event.currentTarget.appendChild(existingUnit);
+	            }
+	            return;
+	        }
+
+	        const newUnitDiv = document.createElement('div');
+	        newUnitDiv.textContent = unitData.name;
+	        newUnitDiv.classList.add('p-2', 'bg-gray-700', 'rounded', 'text-center', 'draggable');
+	        newUnitDiv.draggable = true;
+	        newUnitDiv.dataset.id = unitData.id;
+
+	        initializeDraggable(newUnitDiv);
+
+	        if (target.classList.contains('draggable')) {
+	            const dropPosition = determineDropPosition(target, event.clientY);
+	            if (dropPosition === 'before') {
+	                target.parentNode.insertBefore(newUnitDiv, target);
+	            } else {
+	                target.parentNode.insertBefore(newUnitDiv, target.nextSibling);
+	            }
+	        } else if (target.classList.contains('droppable-area')) {
+	            // 空の枠にドロップする場合
+	            target.appendChild(newUnitDiv);
+	        } else {
+	            event.currentTarget.appendChild(newUnitDiv);
+	        }
+
+	        updateTargetSelection();
+	    }
+
+	    function determineDropPosition(target, mouseY) {
+	        const targetRect = target.getBoundingClientRect();
+	        const targetMidY = targetRect.top + targetRect.height / 2;
+	        return mouseY < targetMidY ? 'before' : 'after';
+	    }
+		
+		// ユニットを陣営に追加
+	    function addUnit(container, unitName) {
+	        const unitDiv = document.createElement('div');
+	        unitDiv.textContent = unitName;
+	        unitDiv.classList.add('p-2', 'bg-gray-700', 'rounded', 'text-center', 'draggable');
+	        unitDiv.draggable = true;
+	        container.appendChild(unitDiv);
+
+	        initializeDraggable(unitDiv);
+	    }
+		
+		// 味方に追加
+	    addToFriendButton.addEventListener('click', () => {
+	        const selectedUnit = unitSelection.value;
+	        const position = document.getElementById('position-selection').value;
+	        if (selectedUnit) {
+	            if (position === '前衛') {
+	                addUnit(friendFront, selectedUnit);
+	            } else if (position === '中衛') {
+	                addUnit(friendMiddle, selectedUnit);
+	            } else if (position === '後衛') {
+	                addUnit(friendBack, selectedUnit);
+	            }
+	        }
+	        updateTargetSelection();
+	    });
+		
+		// 敵に追加
+	    addToEnemyButton.addEventListener('click', () => {
+	        const selectedUnit = unitSelection.value;
+	        const position = document.getElementById('position-selection').value;
+	        if (selectedUnit) {
+	            if (position === '前衛') {
+	                addUnit(enemyFront, selectedUnit);
+	            } else if (position === '中衛') {
+	                addUnit(enemyMiddle, selectedUnit);
+	            } else if (position === '後衛') {
+	                addUnit(enemyBack, selectedUnit);
+	            }
+	        }
+	        updateTargetSelection();
+	    });
+		
+		
+		// 配置を収集
+        function collectUnits() {
+            const positions = {
+                friendFront: [],
+                friendMiddle: [],
+                friendBack: [],
+                enemyFront: [],
+                enemyMiddle: [],
+                enemyBack: []
+            };
+
+            // 各ポジションのユニットを収集
+            document.querySelectorAll('#friend-front .draggable').forEach(unit => {
+                positions.friendFront.push(unit.textContent);
+            });
+            document.querySelectorAll('#friend-middle .draggable').forEach(unit => {
+                positions.friendMiddle.push(unit.textContent);
+            });
+            document.querySelectorAll('#friend-back .draggable').forEach(unit => {
+                positions.friendBack.push(unit.textContent);
+            });
+            document.querySelectorAll('#enemy-front .draggable').forEach(unit => {
+                positions.enemyFront.push(unit.textContent);
+            });
+            document.querySelectorAll('#enemy-middle .draggable').forEach(unit => {
+                positions.enemyMiddle.push(unit.textContent);
+            });
+            document.querySelectorAll('#enemy-back .draggable').forEach(unit => {
+                positions.enemyBack.push(unit.textContent);
+            });
+
+            return positions;
+        }
+
+        // 配置をサーバーに送信
+        document.getElementById('send-positions').addEventListener('click', () => {
+            const positions = collectUnits();
+
+            fetch('/unitformation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(positions)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('response').innerHTML = `
+                    <p>開始</p>
+                `;
+            })
+            .catch(error => console.error('Error:', error));
+        });
+		
+		// ターゲットの選択リスト更新
+	    function updateTargetSelection() {
+	        const targetSelection = document.getElementById('target-selection');
+	        const actorSelection = document.getElementById('actor-selection');
+	        targetSelection.innerHTML = '';
+	        actorSelection.innerHTML = '自分';
+
+	        const allUnits = [
+	            ...friendFront.querySelectorAll('.draggable'),
+	            ...friendMiddle.querySelectorAll('.draggable'),
+	            ...friendBack.querySelectorAll('.draggable'),
+	            ...enemyFront.querySelectorAll('.draggable'),
+	            ...enemyMiddle.querySelectorAll('.draggable'),
+	            ...enemyBack.querySelectorAll('.draggable')
+	        ];
+
+	        allUnits.forEach(unit => {
+	            const option = document.createElement('option');
+	            option.value = unit.textContent;
+	            option.textContent = unit.textContent;
+	            targetSelection.appendChild(option);
+	        });
+	        
+	        const option = document.createElement('option');
+            option.value = '自分';
+            option.textContent = '自分';
+            actorSelection.appendChild(option);
+	        
+	        allUnits.forEach(unit => {
+	            const option = document.createElement('option');
+	            option.value = unit.textContent;
+	            option.textContent = unit.textContent;
+	            actorSelection.appendChild(option);
+	        });
+	        
+	        const numberSelection = document.getElementById('number-selection');
+	        const selectedCount = parseInt(numberSelection.value.replace('count', ''));
+	        if (selectedCount > 1) {
+	            targetSelection.multiple = true;
+	            targetSelection.size = Math.min(selectedCount, allUnits.length);
+	        } else {
+	            targetSelection.multiple = false;
+	            targetSelection.size = 1;
+	        }
+	    }
+
+	    function generateUniqueId() {
+	        return 'unit-' + Math.random().toString(36).substr(2, 9);
+	    }
+
+	    updateTargetSelection();
+
+        const numberSelection = document.getElementById('number-selection');
+        // イベントリスナーを追加して、選択が変更されたときにupdateTargetSelectionを呼び出す
+        numberSelection.addEventListener('change', updateTargetSelection);
+    
+		// 更新
+        const chatContainer = document.getElementById('result-output');
+
+        // チャット欄を定期的に更新する関数
+        function fetchChatMessages() {
+            fetch('/get_chat_messages') // サーバーからチャットメッセージを取得するAPI
+                .then(response => response.json())
+                .then(data => {
+                    // チャット欄をクリア
+                    chatContainer.innerHTML = '';
+                    // 新しいメッセージを追加
+                    data.messages.forEach(message => {
+                        const messageElement = document.createElement('div');
+                        messageElement.className = 'message';
+                        messageElement.textContent = message.text;
+                        chatContainer.appendChild(messageElement);
+                    });
+                })
+                .catch(error => console.error('Error fetching messages:', error));
+        }
+
+        // メッセージを送信する関数
+        function sendMessage() {
+            const message = messageInput.value;
+            if (message.trim() === '') return;
+
+            fetch('/send_message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: message })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // メッセージを送信した後、チャット欄を更新
+                fetchChatMessages();
+                messageInput.value = ''; // 入力欄をクリア
+            })
+            .catch(error => console.error('Error sending message:', error));
+        }
+
+        // 定期的にチャット欄を更新 (例えば、5秒ごと)
+        //setInterval(fetchChatMessages, 5000);
+
+        // 送信ボタンにクリックイベントを追加
+        //sendMessageButton.addEventListener('click', sendMessage);
+
+        // ページが読み込まれたときに最初にチャットメッセージを取得
+        //fetchChatMessages();
+        
+    });
+    
+    //AJAX
+	document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('command-form');
+        const resultOutput = document.getElementById('result-output');
+
+        form.addEventListener('submit', function (event) {
+            event.preventDefault(); // ページリロードを防ぐ
+
+            const formData = new FormData(form); // フォームのデータを取得
+
+            fetch(form.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json()) // レスポンスをJSON形式で受け取る
+            .then(data => {
+                // チャット欄に新しいメッセージを表示
+                //resultOutput.innerHTML = '';
+                data.result.forEach(message => {
+                    const messageElement = document.createElement('p');
+                    messageElement.textContent = message;
+                    resultOutput.appendChild(messageElement);
+                });
+                
+                // スクロールエリアを一番下までスクロール
+                resultOutput.scrollTop = resultOutput.scrollHeight;
+            })
+            .catch(error => console.error('Error:', error));
+        });
+        
+        
+	});
+	
+
+</script>
+
+{% endblock %}

@@ -1,6 +1,9 @@
 from main import db,app
-from sqlalchemy import inspect,Integer
+from sqlalchemy import inspect,Integer,func
 from sqlalchemy.orm import class_mapper
+
+def coalesce(value):
+    return value if value is not None else 0
 
 # ユーザーモデルの定義
 class User(db.Model):
@@ -30,7 +33,7 @@ class Character(db.Model):
     type = db.Column(db.String(45), nullable=False)
     age = db.Column(db.Integer)
     sex = db.Column(db.Integer)
-    lavel = db.Column(db.String(45))
+    label = db.Column(db.String(45))
     backborn = db.Column(db.String(45))
     Technique = db.Column(db.Integer, nullable=False, default=0)
     Body = db.Column(db.Integer, nullable=False, default=0)
@@ -64,47 +67,86 @@ class Character(db.Model):
     
     def GetStatus(self):
 
-        # Statusの名前
-        status_name = self.name + '_Status'
-        # 同名のStatusが存在するかをチェック
         mystatus = Status.query.filter_by(related_id=self.id).first()
-        myskills = Skills.query.filter_by(related_id=self.id).first()
 
+        # 装備による補正
+        EquipmentDEX = db.session.query(func.sum(Equipment.dex)).filter_by(related_id=self.id).scalar()
+        EquipmentAGI = db.session.query(func.sum(Equipment.agi)).filter_by(related_id=self.id).scalar()
+        EquipmentSTR = db.session.query(func.sum(Equipment.str)).filter_by(related_id=self.id).scalar()
+        EquipmentVIT = db.session.query(func.sum(Equipment.vit)).filter_by(related_id=self.id).scalar()
+        EquipmentINT = db.session.query(func.sum(Equipment.int)).filter_by(related_id=self.id).scalar()
+        EquipmentMND = db.session.query(func.sum(Equipment.mnd)).filter_by(related_id=self.id).scalar()
+        EquipmentHP = db.session.query(func.sum(Equipment.HP)).filter_by(related_id=self.id).scalar()
+        EquipmentMP = db.session.query(func.sum(Equipment.MP)).filter_by(related_id=self.id).scalar()
 
         # ステータスを変数として取得
-        DEX= self.Technique + self.A + self.d1 + self.e1
-        AGI= self.Technique + self.B + self.d2 + self.e2
-        STR= self.Body + self.C + self.d3 + self.e3
-        VIT= self.Body + self.D + self.d4 + self.e4
-        INT= self.Heart + self.E + self.d5 + self.e5
-        MND= self.Heart + self.F + self.d6 + self.e6
-        LEVEL= myskills.get_max_skill_value('All')[1]
-        MP= myskills.get_total_magic_value() * 3 + MND + 1
-        MAG= myskills.get_max_skill_value('Magics')[1] + INT//6
+        DEX= self.Technique + self.A + self.d1 + self.e1 + EquipmentDEX
+        AGI= self.Technique + self.B + self.d2 + self.e2 + EquipmentAGI
+        STR= self.Body + self.C + self.d3 + self.e3 + EquipmentSTR
+        VIT= self.Body + self.D + self.d4 + self.e4 + EquipmentVIT
+        INT= self.Heart + self.E + self.d5 + self.e5 + EquipmentINT
+        MND= self.Heart + self.F + self.d6 + self.e6 + EquipmentMND
 
+        LEVEL = db.session.query(func.max(Job.level)).filter_by(related_id=self.id).scalar()
+        if LEVEL is None:
+            LEVEL = 0
+
+        MP = db.session.query(func.sum(Job.level)).filter_by(related_id=self.id,type="魔法").scalar() 
+        if MP is None:
+            MP = 0
+        MP = MP * 3 + MND +1
+        
+        MAG = db.session.query(func.max(Job.level)).filter_by(related_id=self.id,type="魔法").scalar()
+        if MAG is None:
+            MAG = 0
+        else:
+            MAG = MAG + INT//6
+
+        sage = Job.query.filter_by(related_id=self.id, name="セージ").first()
+        if sage is None:
+            Knowledge = 0
+        else:
+            Knowledge = sage.level + INT//6
+
+        skaut = Job.query.filter_by(related_id=self.id, name="スカウト").first()
+        if skaut is None:
+            Quickness = 0
+        else:
+            Quickness = skaut.level + AGI//6
+
+        physical_level = db.session.query(func.max(Job.level)).filter_by(related_id=self.id, type = "物理").scalar()
+
+        if physical_level is None:
+            physical_level = 0
         # アプリケーションコンテキストを使用する
         # with app.app_context():  
         # with db.session.begin():
         if mystatus:
-            mystatus.DEX= DEX,
-            mystatus.AGI= AGI,
-            mystatus.STR= STR,
-            mystatus.VIT= VIT,
-            mystatus.INT= INT,
-            mystatus.MND= MND,
-            mystatus.HP= LEVEL * 3 + VIT ,
-            mystatus.MP= MP,
-            mystatus.LEVEL=LEVEL,
-            mystatus.VITREG= LEVEL + VIT//6,
-            mystatus.MNDREG= LEVEL + MND//6,
-            mystatus.MAG= MAG,
-            mystatus.魔物知識= INT//6,
-            mystatus.先制力= AGI//6,
-            mystatus.移動力= AGI,
-            mystatus.全力移動= AGI * 3,
-            mystatus.器用度ボーナス= DEX//6,
-            mystatus.筋力ボーナス= STR//6,
-            mystatus.敏捷度ボーナス= AGI//6
+            mystatus.DEX= DEX
+            mystatus.AGI= AGI
+            mystatus.STR= STR
+            mystatus.VIT= VIT
+            mystatus.INT= INT
+            mystatus.MND= MND
+            mystatus.HP= LEVEL * 3 + VIT + EquipmentHP
+            mystatus.MP= MP + EquipmentMP
+            mystatus.LEVEL=LEVEL
+            mystatus.VITREG= LEVEL + VIT//6
+            mystatus.MNDREG= LEVEL + MND//6
+            mystatus.MAG= MAG
+            mystatus.魔物知識= Knowledge
+            mystatus.先制力= Quickness
+            mystatus.移動力= AGI
+            mystatus.全力移動= AGI * 3
+            mystatus.命中力= physical_level + DEX//6
+            mystatus.回避力= physical_level + AGI//6
+            mystatus.基本ダメージ= physical_level + STR//6
+            mystatus.器用度ボーナス = DEX//6
+            mystatus.筋力ボーナス = STR//6
+            mystatus.敏捷度ボーナス = AGI//6
+            mystatus.知力ボーナス = INT//6
+            mystatus.生命力ボーナス = VIT//6
+            mystatus.精神力ボーナス = MND//6
 
             # セッションに追加して保存
             db.session.add(mystatus)
@@ -128,13 +170,6 @@ class Character(db.Model):
                 VITREG= LEVEL + VIT//6,
                 MNDREG= LEVEL + MND//6,
                 MAG=MAG,
-                魔物知識= INT//6,
-                先制力= AGI//6,
-                移動力= AGI,
-                全力移動= AGI * 3,
-                器用度ボーナス= DEX//6,
-                筋力ボーナス= STR//6,
-                敏捷度ボーナス= AGI//6
                 )
 
             # セッションに追加して保存
@@ -142,13 +177,6 @@ class Character(db.Model):
             db.session.commit()
 
             return my_status
-            
-    def GetSkills(self):
-        # 同名のStatusが存在するかをチェック
-        myskill = Status.query.filter_by(related_id=self.id).first()
-        myskill.深智魔法 = min(myskill.ソーサラー魔法,myskill.コンジュラー魔法)
-
-        return myskill
     
 # Statusモデルの定義
 class Status(db.Model):
@@ -174,95 +202,19 @@ class Status(db.Model):
     先制力 = db.Column(db.Integer)
     移動力 = db.Column(db.Integer)
     全力移動 = db.Column(db.Integer)
+    命中力 = db.Column(db.Integer)
+    回避力 = db.Column(db.Integer)
+    基本ダメージ = db.Column(db.Integer)
     器用度ボーナス = db.Column(db.Integer)
     筋力ボーナス = db.Column(db.Integer)
     敏捷度ボーナス = db.Column(db.Integer)
+    知力ボーナス = db.Column(db.Integer)
+    生命力ボーナス = db.Column(db.Integer)
+    精神力ボーナス = db.Column(db.Integer)
 
     def __repr__(self):
         return f'<Status {self.name}>'
 
-class Skills(db.Model):
-    __tablename__ = 'Skills'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    related_id = db.Column(db.Integer, db.ForeignKey('Character.id'), nullable=True)  # 外部キー
-    name = db.Column(db.String(45), unique=True, nullable=False)
-    ソーサラー魔法 = db.Column(db.Integer, default=0, nullable=False)
-    コンジュラー魔法 = db.Column(db.Integer, default=0, nullable=False)
-    フェアリーテイマー魔法 = db.Column(db.Integer, default=0, nullable=False)
-    プリースト魔法 = db.Column(db.Integer, default=0, nullable=False)
-    マギテック魔法 = db.Column(db.Integer, default=0, nullable=False)
-    深智魔法 = db.Column(db.Integer, default=0, nullable=False)
-    ファイター物理 = db.Column(db.Integer, default=0, nullable=False)
-    グラップラー物理 = db.Column(db.Integer, default=0, nullable=False)
-    フェンサー物理 = db.Column(db.Integer, default=0, nullable=False)
-    シューター物理 = db.Column(db.Integer, default=0, nullable=False)
-    スカウト = db.Column(db.Integer, default=0, nullable=False)
-    レンジャー = db.Column(db.Integer, default=0, nullable=False)
-    セージ = db.Column(db.Integer, default=0, nullable=False)
-    ウォーリーダー = db.Column(db.Integer, default=0, nullable=False)
-    ミスティック = db.Column(db.Integer, default=0, nullable=False)
-    ライダー = db.Column(db.Integer, default=0, nullable=False)
-    アルケミスト = db.Column(db.Integer, default=0, nullable=False)
-    バード = db.Column(db.Integer, default=0, nullable=False)
-    エンハンサー = db.Column(db.Integer, default=0, nullable=False)
-    ウィザード = db.Column(db.Integer, default=0, nullable=False)
-
-    def get_max_skill_value(self,keyword):
-        # 自身の属性を取得
-        attributes = inspect(self.__class__).columns
-
-        if keyword == "All":
-            # name, id, related_id 以外で、Integer型のカラムのみをフィルタリング
-            skill_values = {
-                attr_name: getattr(self, attr_name) 
-                for attr_name, column in attributes.items()
-                if column.type.__class__ == Integer and attr_name not in ['id', 'related_id', 'name']
-            }
-
-        elif keyword == "Physics":
-            # '物理' が名前に含まれ、Integer型のカラムのみをフィルタリング
-            skill_values = {
-                attr_name: getattr(self, attr_name) 
-                for attr_name, column in attributes.items()
-                if column.type.__class__ == Integer 
-                    and '物理' in attr_name
-            }
-
-        elif keyword == "Magics":
-            # '魔法' が名前に含まれ、Integer型のカラムのみをフィルタリング
-            skill_values = {
-                attr_name: getattr(self, attr_name) 
-                for attr_name, column in attributes.items()
-                if column.type.__class__ == Integer 
-                    and '魔法' in attr_name and attr_name not in ['深智魔法', 'related_id', 'id']
-            }
-
-        if not skill_values:
-            return None, 0
-        
-        # 最大値を取得
-        max_skill_name, max_skill_value = max(skill_values.items(), key=lambda item: item[1])
-        return max_skill_name, max_skill_value
-    
-    def get_total_magic_value(self):
-        # 自身の属性を取得
-        attributes = inspect(self.__class__).columns
-        # '魔法' が名前に含まれ、Integer型のカラムのみをフィルタリング
-        skill_values = {
-        attr_name: getattr(self, attr_name) 
-        for attr_name, column in attributes.items()
-        if isinstance(column.type, Integer) 
-        and '魔法' in attr_name 
-        and attr_name not in ['深智魔法', 'related_id', 'id']
-    }
-        
-        # 合計を取得
-        sum_skill_value = sum(skill_values.values())
-        return sum_skill_value
-    
-    def __repr__(self):
-        return f'<Skills {self.name}>'
-    
     
 class PowerDamage(db.Model):
     __tablename__ = 'PowerDamage'  # 既存のテーブル名に合わせて変更
@@ -309,15 +261,15 @@ class Weapon(db.Model):
     related_id = db.Column(db.Integer, db.ForeignKey('Character.id'), nullable=True)
     name = db.Column(db.String(45), nullable=False)
     type = db.Column(db.String(45), nullable=True)
-    category = db.Column(db.String(45), nullable=True)
+    カテゴリー = db.Column(db.String(45), nullable=True)
     actual = db.Column(db.String(10), nullable=True)
-    rank = db.Column(db.String(5), nullable=True)
-    using = db.Column(db.String(10), nullable=True)
-    weight = db.Column(db.Integer, default=0)
-    aim = db.Column(db.Integer, default=0)
-    power = db.Column(db.Integer, default=0)
-    critical = db.Column(db.Integer, default=10)
-    damage = db.Column(db.Integer, default=0)
+    ランク = db.Column(db.String(5), nullable=True)
+    用法 = db.Column(db.String(10), nullable=True)
+    必筋 = db.Column(db.Integer, default=0)
+    命中 = db.Column(db.Integer, default=0)
+    威力 = db.Column(db.Integer, default=0)
+    クリティカル = db.Column(db.Integer, default=10)
+    追加ダメージ = db.Column(db.Integer, default=0)
     explain = db.Column(db.String(950), nullable=True)
     command = db.Column(db.String(45), nullable=True)
     effect = db.Column(db.String(90), nullable=True)
@@ -331,13 +283,301 @@ class Protector(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     related_id = db.Column(db.Integer, db.ForeignKey('Character.id'), nullable=True)
     name = db.Column(db.String(45), nullable=False)
-    defense = db.Column(db.Integer, default=0)
-    weight = db.Column(db.Integer, nullable=True)
-    evasion = db.Column(db.Integer, default=0)
-    accuracy = db.Column(db.Integer, default=0)
+    防護点 = db.Column(db.Integer, default=0, nullable=True)
+    必筋 = db.Column(db.Integer, nullable=True)
+    回避 = db.Column(db.Integer, default=0, nullable=True)
+    命中 = db.Column(db.Integer, default=0, nullable=True)
     type = db.Column(db.String(45), nullable=True)
+    ランク = db.Column(db.String(45), nullable=True)
     explain = db.Column(db.String(90), nullable=True)
     command = db.Column(db.String(45), nullable=True)
 
     def __repr__(self):
         return f'<Protector {self.name}>'
+    
+class UserCommand(db.Model):
+    __tablename__ = 'UserCommand'
+
+    id = db.Column(Integer, primary_key=True, autoincrement=True)
+    related_id = db.Column(Integer, nullable=True)
+    creator = db.Column(db.String(45), nullable=True)
+    name = db.Column(db.String(45), unique=True, nullable=False)
+    command = db.Column(db.String(9945), nullable=True)
+    explain = db.Column(db.String(245), nullable=True)
+
+
+    def __repr__(self):
+        return f"UserCommand(id={self.id}, related_id={self.related_id}, creator='{self.creator}', name='{self.name}', command='{self.command}', explain='{self.explain}')"
+
+
+class Unit(db.Model):
+    __tablename__ = 'Unit'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    related_id = db.Column(db.Integer, default=None)
+    name = db.Column(db.String(45), nullable=True)
+    label = db.Column(db.String(45), nullable=True)
+    HP = db.Column(db.Integer, default=0)
+    MP = db.Column(db.Integer, default=0)
+    命中= db.Column(db.Integer, default=0)
+    回避 = db.Column(db.Integer, default=0)
+    防護点 = db.Column(db.Integer, default=0)
+    先制力 = db.Column(db.Integer, default=0)
+    魔物知識 = db.Column(db.Integer, default=0)
+    魔物知識要求値 = db.Column(db.Integer, default=0)
+    生命抵抗 = db.Column(db.Integer, default=0)
+    精神抵抗 = db.Column(db.Integer, default=0)
+    詳細 = db.Column(db.String(455), nullable=True)
+    弱点 = db.Column(db.String(45), nullable=True)
+    基本ダメージ = db.Column(db.Integer, default=0)
+    MP軽減 = db.Column(db.Integer, default=0)
+    魔力 = db.Column(db.Integer, default=0)
+    type = db.Column(db.String(45), nullable=True)
+    active = db.Column(db.Boolean, nullable=True)
+    MaxHP = db.Column(db.Integer, default=0)
+    MaxMP = db.Column(db.Integer, default=0)
+    DEX = db.Column(db.Integer, default=0, nullable=True)
+    STR = db.Column(db.Integer, default=0, nullable=True)
+    AGI = db.Column(db.Integer, default=0, nullable=True)
+    VIT = db.Column(db.Integer, default=0, nullable=True)
+    INT = db.Column(db.Integer, default=0, nullable=True)
+    MND = db.Column(db.Integer, default=0, nullable=True)
+    魔力ボーナス = db.Column(db.Integer, default=0, nullable=True)
+    クリティカルボーナス = db.Column(db.Integer, default=0, nullable=True)
+
+    def __repr__(self):
+        return f"Unit(id={self.id}, name='{self.name}')"
+    
+    def GetCharacterUnit(self):
+        myStatus = Status.query.filter_by(related_id=self.related_id).first()
+        physiclevel = db.session.query(func.max(Job.level)).filter_by(related_id=self.related_id, type = "物理").scalar()
+        magiclevel = db.session.query(func.max(Job.level)).filter_by(related_id=self.related_id, type = "魔法").scalar()
+        
+        # ボーナス補正
+        self.DEX = myStatus.器用度ボーナス
+        self.AGI = myStatus.敏捷度ボーナス 
+        self.STR = myStatus.筋力ボーナス 
+        self.VIT = myStatus.生命力ボーナス 
+        self.INT = myStatus.知力ボーナス 
+        self.MND = myStatus.精神力ボーナス 
+
+        if physiclevel is None:
+            self.先制力 = 0
+            self.回避 = 0
+            self.基本ダメージ = 0
+        else:
+            # 命中力補正
+            EquipmentAccuracy = db.session.query(func.sum(Equipment.acr)).filter_by(related_id=self.related_id).scalar()
+            EquipmentAccuracy = coalesce(EquipmentAccuracy)
+            ProtectorAccuracy = db.session.query(func.sum(Protector.命中)).filter_by(related_id=self.related_id).scalar()
+            ProtectorAccuracy = coalesce(ProtectorAccuracy)
+            self.先制力 = physiclevel + self.DEX + EquipmentAccuracy + ProtectorAccuracy
+        
+            # 回避力補正
+            EquipmentEvasion = db.session.query(func.sum(Equipment.evs)).filter_by(related_id=self.related_id).scalar()
+            EquipmentEvasion = coalesce(EquipmentEvasion)
+            ProtectorEvasion = db.session.query(func.sum(Protector.回避)).filter_by(related_id=self.related_id).scalar()
+            ProtectorEvasion = coalesce(ProtectorEvasion)
+            self.回避 = physiclevel + self.AGI + EquipmentEvasion + ProtectorEvasion
+
+             # ダメージ補正
+            EquipmentDamage = db.session.query(func.sum(Equipment.dmg)).filter_by(related_id=self.related_id).scalar()
+            EquipmentDamage = coalesce(EquipmentDamage)
+            self.基本ダメージ = physiclevel + self.STR + EquipmentDamage
+        
+
+        # 防護点補正
+        EquipmentDefense = db.session.query(func.sum(Equipment.dfn)).filter_by(related_id=self.related_id).scalar()
+        EquipmentDefense = coalesce(EquipmentDefense)
+        ProtectorDefense = db.session.query(func.sum(Protector.防護点)).filter_by(related_id=self.related_id).scalar()
+        ProtectorDefense = coalesce(ProtectorDefense)
+        self.防御 = EquipmentDefense + ProtectorDefense
+
+        # 魔力補正
+        if magiclevel is None:
+            self.魔力 =0
+        else:
+            EquipmentMagic = db.session.query(func.sum(Equipment.magic)).filter_by(related_id=self.related_id).scalar()
+            EquipmentMagic = coalesce(EquipmentMagic)
+            self.魔力ボーナス = self.INT + EquipmentMagic
+            self.魔力 = self.魔力 + int(magiclevel)
+        
+
+         # 先制力補正
+        EquipmentQuick = db.session.query(func.sum(Equipment.quickness)).filter_by(related_id=self.related_id).scalar()
+        EquipmentQuick = coalesce(EquipmentQuick)
+        self.先制力 = myStatus.先制力 + EquipmentQuick
+
+         # 魔物知識補正
+        EquipmentKnowledge = db.session.query(func.sum(Equipment.knowledge)).filter_by(related_id=self.related_id).scalar()
+        EquipmentKnowledge = coalesce(EquipmentKnowledge)
+        self.魔物知識 = myStatus.魔物知識 + EquipmentKnowledge
+
+         # 精神抵抗補正
+        EquipmentMNDREG = db.session.query(func.sum(Equipment.MNDREG)).filter_by(related_id=self.related_id).scalar()
+        EquipmentMNDREG = coalesce(EquipmentMNDREG)
+        self.精神抵抗 = myStatus.MNDREG + EquipmentMNDREG
+
+         # 生命抵抗補正
+        EquipmentVITREG = db.session.query(func.sum(Equipment.VITREG)).filter_by(related_id=self.related_id).scalar()
+        EquipmentVITREG = coalesce(EquipmentVITREG)
+        self.生命抵抗 = myStatus.VITREG + EquipmentVITREG
+
+        self.MaxHP = myStatus.HP
+        self.MaxMP = myStatus.MP
+
+        db.session.add(self)
+        db.session.commit()
+
+        return self
+
+    
+class SubCharacter(db.Model):
+    __tablename__ = 'SubCharacter'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    related_id = db.Column(db.Integer, default=None)
+    name = db.Column(db.String(45), default=None)
+    Level = db.Column(db.Integer, default=0)
+    HP = db.Column(db.Integer, default=0)
+    MP = db.Column(db.Integer, default=0)
+    Accuracy = db.Column(db.Integer, default=0)
+    Evasion = db.Column(db.Integer, default=0)
+    Defence = db.Column(db.Integer, default=0)
+    Require_Quickness = db.Column(db.Integer, default=0)
+    Knowledge = db.Column(db.Integer, default=0)
+    Require_knowledge = db.Column(db.Integer, default=0)
+    VID = db.Column(db.Integer, default=0)
+    MND = db.Column(db.Integer, default=0)
+    detail = db.Column(db.String(455), default=None)
+    weakpoint = db.Column(db.String(45), default=None)
+    damage = db.Column(db.Integer, default=0)
+    magic_power = db.Column(db.Integer, default=0)
+    type = db.Column(db.String(45), default=None)
+    partnum = db.Column(db.Integer, default=0)
+
+    def __repr__(self):
+        return f"SubCharacter(id={self.id}, name='{self.name}')"
+
+class SubCharacterPart(db.Model):
+    __tablename__ = 'SubCharacterPart'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    related_id = db.Column(db.Integer, default=None)
+    name = db.Column(db.String(45), default=None)
+    HP = db.Column(db.Integer, default=0)
+    MP = db.Column(db.Integer, default=0)
+    Accuracy = db.Column(db.Integer, default=0)
+    Evasion = db.Column(db.Integer, default=0)
+    Defence = db.Column(db.Integer, default=0)
+    Require_Quickness = db.Column(db.Integer, default=0)
+    Knowledge = db.Column(db.Integer, default=0)
+    Require_knowledge = db.Column(db.Integer, default=0)
+    VID = db.Column(db.Integer, default=0)
+    MND = db.Column(db.Integer, default=0)
+    detail = db.Column(db.String(455), default=None)
+    weakpoint = db.Column(db.String(45), default=None)
+    damage = db.Column(db.Integer, default=0)
+    magic_power = db.Column(db.Integer, default=0)
+    partnumber = db.Column(db.Integer, default=0)
+
+    def __repr__(self):
+        return f"SubCharacterPart(id={self.id}, name='{self.name}')"
+    
+
+class Equipment(db.Model):
+    __tablename__ = 'Equipment'
+
+    id = db.Column(Integer, primary_key=True, autoincrement=True)
+    related_id = db.Column(Integer, nullable=True)
+    name = db.Column(db.String(45), nullable=True)
+    type = db.Column(db.String(45), nullable=True)
+    explain = db.Column(db.String(45), nullable=True)
+    dex = db.Column(Integer, default=0)
+    agi = db.Column(Integer, default=0)
+    str = db.Column(Integer, default=0)
+    vit = db.Column(Integer, default=0)
+    int = db.Column(Integer, default=0)
+    mnd = db.Column(Integer, default=0)
+    dfn = db.Column(Integer, default=0) 
+    evs = db.Column(Integer, default=0)
+    dmg = db.Column(Integer, default=0)
+    acr = db.Column(Integer, default=0)
+    command = db.Column(db.String(45), nullable=True)
+    knowledge = db.Column(Integer, default=0)
+    quickness = db.Column(Integer, default=0)
+    magic = db.Column(Integer, default=0)
+    HP = db.Column(Integer, default=0)
+    MP = db.Column(Integer, default=0)
+    VITREG = db.Column(Integer, default=0)
+    MNDREG = db.Column(Integer, default=0)
+
+    def __repr__(self):
+        return f"<Equipment(id={self.id}, name={self.name}, type={self.type})>"
+
+class Memo(db.Model):
+    __tablename__ = 'Memo'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    related_id = db.Column(db.String(45), nullable=True)
+    content = db.Column(db.Text, nullable=True)
+
+    def __repr__(self):
+        return f'<Memo {self.id}>'
+    
+class MagicTable(db.Model):
+    __tablename__ = 'MagicTable'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(45), nullable=True)
+    master = db.Column(db.String(45), nullable=True)
+    exptable = db.Column(db.String(45), nullable=True)
+
+    def getUserMagic(self,character_id,magiclevel):
+        magic = UserMagic.query.filter_by(related_id=character_id,name=self.name).first()
+        if magic is None:
+            magic = UserMagic(
+                        name = self.name,
+                        related_id = character_id,
+                        level = magiclevel
+                    )
+        else:
+            magic.level=magiclevel
+        
+        db.session.add(magic)
+        db.session.commit()
+
+        return magic
+
+    def __repr__(self):
+        return f'<MagicTable {self.id}>'
+    
+
+class UserMagic(db.Model):
+    __tablename__ = 'UserMagic'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(45), nullable=True)
+    related_id = db.Column(db.Integer, nullable=True)
+    level = db.Column(db.Integer, nullable=True)
+
+    def __repr__(self):
+        return f'<UserMagic {self.id}>'
+    
+
+class Skill(db.Model):
+    __tablename__ = 'Skill'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(45), nullable=True)
+    related_id = db.Column(db.Integer, nullable=True)
+    getlevel = db.Column(db.Integer, nullable=True)
+    getway = db.Column(db.String(45), nullable=True)
+    effect = db.Column(db.String(45), nullable=True)
+    explain = db.Column(db.String(45), nullable=True)
+    command = db.Column(db.String(445), nullable=True)
+    type = db.Column(db.String(445), nullable=True)
+
+    def __repr__(self):
+        return f'<Skill {self.id}>'
+

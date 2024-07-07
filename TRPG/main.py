@@ -1,6 +1,7 @@
-from flask import Flask, request, render_template, redirect, url_for, session, flash
+from flask import Flask, request, render_template, redirect, url_for, session, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import inspect
+from sqlalchemy import inspect,func
+from flask_cors import CORS
 
 db = SQLAlchemy()
 
@@ -15,6 +16,8 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # データベースオブジェクトの作成
 db = SQLAlchemy(app)
 
+CORS(app)
+
 # コマンドのログを保存するリスト
 command_logs = []
 
@@ -22,9 +25,15 @@ command_logs = []
 WEAPON_CATEGORIES = [
     "ソード", "アックス", "スピア", "メイス", "クラブ",
     "スタッフ", "ガン", "フレイル", "ウォーハンマー",
-    "ボウ", "クロスボウ", "スリング"
+    "ボウ", "クロスボウ", "スリング", "グラップラー",
 ]
 
+FriendFrontUnits = ["アデル", "ヒイロ"]
+FriendMidleUnits = []
+FriendBackUnits = ["ルキナ", "ティー", "フラン"]
+EnemyFrontUnits = []
+EnemyMidleUnits = []
+EnemyBackUnits = []
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -33,10 +42,6 @@ def login():
         user_name = str(request.form['id'])
         password = str(request.form['pwd'])
         action = request.form.get('action')  # クリックされたボタンのvalueを取得
-        
-        print("POSTされたIDは？" + user_name)
-        print("POSTされたPASSWORDは？" + password)
-        print("クリックされたボタンのアクションは？" + action)
 
         if action == 'login':
             # データベースからユーザーを検索
@@ -59,10 +64,6 @@ def login2(character_id):
         user_name = str(request.form['id'])
         password = str(request.form['pwd'])
         action = request.form.get('action')  # クリックされたボタンのvalueを取得
-        
-        print("POSTされたIDは？" + user_name)
-        print("POSTされたPASSWORDは？" + password)
-        print("クリックされたボタンのアクションは？" + action)
 
         if action == 'login':
             # データベースからユーザーを検索
@@ -87,17 +88,19 @@ def show_user_profile():
 
 @app.route("/home/<int:character_id>")
 def home(character_id):
-    from dataclass import Character,Status,Skills
+    from dataclass import Character
     character = Character.query.get_or_404(character_id)
     return render_template('home.html', character=character)
 
 
 @app.route('/profile/<int:character_id>', methods=['GET', 'POST'])
 def profile(character_id):
-    from dataclass import Character,Status,Job
+    from dataclass import Character,Job,MagicTable,Skill
     character = Character.query.get_or_404(character_id)
     # status = Status.query.filter_by(related_id=character.id).first()
     status = character.GetStatus()
+    BattleSkills = Skill.query.filter_by(related_id=character.id,type="戦闘").all()
+    OtherSkills = Skill.query.filter_by(related_id=character.id,type="汎用").all()
 
     # Skill情報の分類
     skills_physical = []
@@ -111,7 +114,13 @@ def profile(character_id):
             skills_magic.append(skill)
         else:
             skills_other.append(skill)
-    
+
+    UsableMagics = []
+    for magicjob in Job.query.filter_by(related_id=character.id,type="魔法").all():
+        fitmagic = MagicTable.query.filter_by(master=magicjob.name).first()
+        magic = fitmagic.getUserMagic(character.id,magicjob.level)
+        UsableMagics.append(magic)
+
     if request.method == 'POST':
         # POSTリクエスト処理、フォームのデータを取得し、必要な操作を実行する
         character.sex = request.form['sex']
@@ -149,8 +158,230 @@ def profile(character_id):
 
     return render_template('profile.html', character=character, status=status,
                            skills_physical=skills_physical, skills_magic=skills_magic,
-                           skills_other=skills_other)
+                           skills_other=skills_other,UsableMagics=UsableMagics,
+                           BattleSkills=BattleSkills,OtherSkills=OtherSkills)
 
+battle_log=[]
+
+@app.route('/battlefield/<int:character_id>', methods=['GET', 'POST'])
+def battlefield(character_id):
+
+    from dataclass import Character,UserCommand,Unit
+    character = Character.query.get_or_404(character_id)
+    user_commands=UserCommand.query.filter_by(related_id=character.id).all()
+    public_commands=UserCommand.query.filter_by(related_id=0).all()
+    units = Unit.query.filter_by(active=True).all()
+    
+    return render_template('battlefield.html', character=character,
+                            user_commands=user_commands, public_commands=public_commands,
+                            units=units, battle_log=battle_log,
+                            FriendFrontUnits=FriendFrontUnits,
+                            FriendMidleUnits=FriendMidleUnits,
+                            FriendBackUnits=FriendBackUnits,
+                            EnemyFrontUnits=EnemyFrontUnits,
+                            EnemyMidleUnits=EnemyMidleUnits,
+                            EnemyBackUnits=EnemyBackUnits)
+    
+@app.route('/unitformation', methods=['POST'])
+def unitformation():
+    global FriendFrontUnits, FriendMidleUnits, FriendBackUnits
+    global EnemyFrontUnits, EnemyMidleUnits, EnemyBackUnits
+
+    data = request.get_json()
+    FriendFrontUnits = data.get('friendFront', [])
+    FriendMidleUnits = data.get('friendMiddle', [])
+    FriendBackUnits = data.get('friendBack', [])
+    EnemyFrontUnits = data.get('enemyFront', [])
+    EnemyMidleUnits = data.get('enemyMiddle', [])
+    EnemyBackUnits = data.get('enemyBack', [])
+    print(FriendFrontUnits,FriendMidleUnits)
+
+    return jsonify({
+        'friendFront': FriendFrontUnits,
+        'friendMiddle': FriendMidleUnits,
+        'friendBack': FriendBackUnits,
+        'enemyFront': EnemyFrontUnits,
+        'enemyMiddle': EnemyMidleUnits,
+        'enemyBack': EnemyBackUnits
+    })
+
+
+@app.route('/subcharacter/<int:character_id>', methods=['GET', 'POST'])
+def subcharacter(character_id):
+    from dataclass import Character,SubCharacter
+    character = Character.query.get_or_404(character_id)
+    subcharacters=SubCharacter.query.filter_by(related_id=character_id,type="CPU").all()
+    monsters=SubCharacter.query.filter_by(related_id=character_id,type="魔物").all()
+
+    if request.method == 'POST':
+        return render_template('subcharacter.html', character=character, subcharacters=subcharacters, monsters=monsters)
+
+    return render_template('subcharacter.html', character=character, subcharacters=subcharacters, monsters=monsters)
+
+
+@app.route('/create_subcharacter/<int:character_id>', methods=['GET', 'POST'])
+def create_subcharacter(character_id):
+    from dataclass import Character,SubCharacter,SubCharacterPart
+    character = Character.query.get_or_404(character_id)
+
+    if request.method == 'POST':
+        sub_name = request.form.get('name').strip()
+        subcharacter=SubCharacter.query.filter_by(name=sub_name).first()
+
+        if sub_name and subcharacter is None and request.form.get('part_1_name'):
+            items = request.form
+
+            new_sub = SubCharacter(
+                        name = sub_name,
+                        related_id = character_id,
+                        Level = request.form.get('Level'),
+                        type = request.form.get('type'),
+                        detail = request.form.get('detail')
+                    )
+            
+            db.session.add(new_sub)
+            db.session.commit()
+
+            for key, value in items.items():
+                
+                if key.startswith("part_") and key.endswith("_number"):
+                    value
+                    partkey = f"part_{value}_"
+
+                    if request.form.get(f'{partkey}name') != "":
+                        new_subPart = SubCharacterPart(
+                            name = request.form.get(f'{partkey}name'),
+                            related_id = new_sub.id,
+                            HP = request.form.get(f'{partkey}HP'),
+                            MP = request.form.get(f'{partkey}MP'),
+                            Accuracy = request.form.get(f'{partkey}Accuracy'),
+                            Evasion = request.form.get(f'{partkey}Evasion'),
+                            Defence = request.form.get(f'{partkey}Defence'),
+                            Require_Quickness = request.form.get(f'{partkey}Require_Quickness'),
+                            Knowledge = request.form.get(f'{partkey}Knowledge'),
+                            Require_knowledge = request.form.get(f'{partkey}Require_knowledge'),
+                            VID = request.form.get(f'{partkey}VID'),
+                            MND = request.form.get(f'{partkey}MND'),
+                            detail = request.form.get(f'{partkey}detail'),
+                            weakpoint = request.form.get(f'{partkey}weakpoint'),
+                            damage = request.form.get(f'{partkey}damage'),
+                            magic_power = request.form.get(f'{partkey}magic_power'),
+                            partnumber = request.form.get(f'{partkey}number')
+                        )
+
+                        new_sub.partnum = value
+
+                        db.session.add(new_subPart)
+                        db.session.add(new_sub)
+                        db.session.commit()
+
+    return redirect(url_for('subcharacter', character_id=character.id))
+
+@app.route('/open_edit_subcharacter/<int:character_id>/<int:subcharacter_id>', methods=['GET', 'POST'])
+def open_edit_subcharacter(character_id,subcharacter_id):
+    from dataclass import Character,SubCharacter,SubCharacterPart
+    
+    subcharacter = SubCharacter.query.get_or_404(subcharacter_id)
+    character = Character.query.get_or_404(character_id)
+    subparts = SubCharacterPart.query.filter_by(related_id=subcharacter_id).all()
+
+    return render_template('edit_subcharacter.html', character=character, subcharacter=subcharacter, subparts=subparts)
+
+
+@app.route('/edit_subcharacter/<int:character_id>/<int:subcharacter_id>', methods=['GET', 'POST'])
+def edit_subcharacter(character_id,subcharacter_id):
+    from dataclass import Character,SubCharacter,SubCharacterPart
+
+    subcharacter = SubCharacter.query.get_or_404(subcharacter_id)
+    character = Character.query.get_or_404(character_id)
+    
+    if request.method == 'POST':
+        sub_name = request.form.get('name').strip()
+
+        if sub_name:
+            items = request.form
+
+            action = request.form.get('action')  # クリックされたボタンのvalueを取得
+            
+            for key, value in items.items():
+  
+                if key.startswith("part_") and key.endswith("_number"):
+                    value
+                    partkey = f"part_{value}_"
+                    partname = request.form.get(f'{partkey}name') 
+
+                    if action == 'save':
+
+                        if partname != "" and SubCharacterPart.query.filter_by(related_id=subcharacter_id, name=partname).first() is None:      
+                            
+                            new_subPart = SubCharacterPart(
+                                name = request.form.get(f'{partkey}name'),
+                                related_id = subcharacter.id,
+                                HP = request.form.get(f'{partkey}HP'),
+                                MP = request.form.get(f'{partkey}MP'),
+                                Accuracy = request.form.get(f'{partkey}Accuracy'),
+                                Evasion = request.form.get(f'{partkey}Evasion'),
+                                Defence = request.form.get(f'{partkey}Defence'),
+                                Require_Quickness = request.form.get(f'{partkey}Require_Quickness'),
+                                Knowledge = request.form.get(f'{partkey}Knowledge'),
+                                Require_knowledge = request.form.get(f'{partkey}Require_knowledge'),
+                                VID = request.form.get(f'{partkey}VID'),
+                                MND = request.form.get(f'{partkey}MND'),
+                                detail = request.form.get(f'{partkey}detail'),
+                                weakpoint = request.form.get(f'{partkey}weakpoint'),
+                                damage = request.form.get(f'{partkey}damage'),
+                                magic_power = request.form.get(f'{partkey}magic_power'),
+                                partnumber = request.form.get(f'{partkey}number')
+                            )
+
+                            db.session.add(new_subPart)
+                            db.session.commit()
+
+                        elif partname != "" :
+                            subpart = SubCharacterPart.query.filter_by(related_id=subcharacter_id, name=partname).first() 
+       
+                            subpart.name = request.form.get(f'{partkey}name'),
+                            subpart.related_id = subcharacter.id,
+                            subpart.HP = request.form.get(f'{partkey}HP'),
+                            subpart.MP = request.form.get(f'{partkey}MP'),
+                            subpart.Accuracy = request.form.get(f'{partkey}Accuracy'),
+                            subpart.Evasion = request.form.get(f'{partkey}Evasion'),
+                            subpart.Defence = request.form.get(f'{partkey}Defence'),
+                            subpart.Require_Quickness = request.form.get(f'{partkey}Require_Quickness'),
+                            subpart.Knowledge = request.form.get(f'{partkey}Knowledge'),
+                            subpart.Require_knowledge = request.form.get(f'{partkey}Require_knowledge'),
+                            subpart.VID = request.form.get(f'{partkey}VID'),
+                            subpart.MND = request.form.get(f'{partkey}MND'),
+                            subpart.detail = request.form.get(f'{partkey}detail'),
+                            subpart.weakpoint = request.form.get(f'{partkey}weakpoint'),
+                            subpart.damage = request.form.get(f'{partkey}damage'),
+                            subpart.magic_power = request.form.get(f'{partkey}magic_power'),
+                            subpart.partnumber = request.form.get(f'{partkey}number')
+
+                            db.session.add(subpart)
+                            db.session.commit()
+
+                    elif action == 'delete':
+                        subpart = SubCharacterPart.query.filter_by(related_id=subcharacter_id, name=partname).first() 
+                        db.session.delete(subpart)
+                        db.session.commit()
+
+            if action == 'save':
+                subcharacter.name = request.form.get('name')
+                subcharacter.Level = request.form.get('Level')
+                subcharacter.type = request.form.get('type')
+
+                db.session.add(subcharacter)
+                db.session.commit()
+
+            elif action == 'delete':
+                db.session.delete(subcharacter)
+                db.session.commit()
+                return redirect(url_for('subcharacter', character_id=character.id))
+
+    subparts = SubCharacterPart.query.filter_by(related_id=subcharacter_id).all()
+
+    return redirect(url_for('subcharacter', character_id=character.id))
 
 @app.route('/add_job/<int:character_id>', methods=['POST'])
 def add_job(character_id):
@@ -175,44 +406,33 @@ def add_job(character_id):
     return redirect(url_for('profile', character_id=character_id))
 
 
-@app.route('/edit_skill/<int:character_id>/<int:skill_id>', methods=['POST'])
-def edit_skill(character_id, skill_id):
+@app.route('/edit_job/<int:character_id>/<int:skill_id>', methods=['POST'])
+def edit_job(character_id, skill_id):
     from dataclass import Character,Job
-    # スキルの削除ロジックをここに追加します
-    skill = Job.query.get(skill_id)
-    inputname = skill.name
-    skill.level = request.form.get(inputname)
 
-    if skill:
-        db.session.add(skill)
-        db.session.commit()
-        flash(f"スキル {skill.name} を変更しました", "success")
-    else:
-        flash("スキルが見つかりません", "error")
-    
-    # 削除後にリダイレクトする
-    return redirect(url_for('profile', character_id=character_id,skill_id=skill_id))
+    if request.method == 'POST':
+        action = request.form.get('action')  # クリックされたボタンのvalueを取得
+        skill = Job.query.get(skill_id)
 
+        if action == 'change':
+             # スキルの編集ロジックをここに追加します
+            inputname = skill.name
+            skill.level = request.form.get(inputname)
 
-@app.route('/delete_skill/<int:character_id>/<int:skill_id>', methods=['POST'])
-def delete_skill(character_id, skill_id):
-    from dataclass import Character,Job
-    # スキルの削除ロジックをここに追加します
-    skill = Job.query.get(skill_id)
-    if skill:
-        db.session.delete(skill)
-        db.session.commit()
-        flash(f"スキル {skill.name} が削除されました", "success")
-    else:
-        flash("スキルが見つかりません", "error")
-    
-    # 削除後にリダイレクトする
+            db.session.add(skill)
+            db.session.commit()
+        
+        elif action == 'delete':
+            db.session.delete(skill)
+            db.session.commit()
+
+    # 編集後にリダイレクトする
     return redirect(url_for('profile', character_id=character_id,skill_id=skill_id))
 
 
 @app.route('/items/<int:character_id>', methods=['GET', 'POST'])
 def items(character_id):
-    from dataclass import Character,Item,Weapon,Protector
+    from dataclass import Character,Item,Weapon,Protector,Equipment,Memo
     character = Character.query.get_or_404(character_id)
     # Item情報を取得
     weapons = Weapon.query.filter_by(related_id=character.id).all()
@@ -220,9 +440,24 @@ def items(character_id):
     protectors = Protector.query.filter_by(related_id=character.id).all()
     # Item情報を取得
     items = Item.query.filter_by(related_id=character.id).all()
+    # メモ情報を取得    
+    myMemo = Memo.query.filter_by(related_id=character_id).first()
+
+    Head = Equipment.query.filter_by(related_id=character_id, type="head").first()
+    Face = Equipment.query.filter_by(related_id=character_id, type="face").first()
+    Ear = Equipment.query.filter_by(related_id=character_id, type="ear").first()
+    Neck = Equipment.query.filter_by(related_id=character_id, type="neck").first()
+    Back = Equipment.query.filter_by(related_id=character_id, type="back").first()
+    RightHand = Equipment.query.filter_by(related_id=character_id, type="right_hand").first()
+    LeftHand = Equipment.query.filter_by(related_id=character_id, type="left_hand").first()
+    Waist = Equipment.query.filter_by(related_id=character_id, type="waist").first()
+    Feet = Equipment.query.filter_by(related_id=character_id, type="feet").first()
+    Other = Equipment.query.filter_by(related_id=character_id, type="other").first()
 
     return render_template('items.html', character=character,items=items, weapons=weapons,
-                           protectors=protectors, weapon_categories=WEAPON_CATEGORIES)
+                           protectors=protectors, weapon_categories=WEAPON_CATEGORIES,
+                           Head=Head,Face=Face,Ear=Ear,Neck=Neck,Back=Back,RightHand=RightHand,
+                           LeftHand=LeftHand,Waist=Waist,Feet=Feet,Other=Other,Memo=myMemo)
 
 
 
@@ -230,12 +465,12 @@ def items(character_id):
 def add_item(character_id):
     from dataclass import Character,Item
     if request.method == 'POST':
-        print('add')
-        item_name = request.form.get('new_item_name[]')
-        item_type = request.form.get('new_item_type[]')
-        item_num = request.form.get('new_item_num[]')
-        item_explain = request.form.get('new_item_explain[]')
-        item_command = request.form.get('new_item_command[]')
+
+        item_name = request.form.get('item_name-new')
+        item_type = request.form.get('item_type-new')
+        item_num = request.form.get('item_num-new')
+        item_explain = request.form.get('item_explain-new')
+        item_command = request.form.get('item_command-new')
 
         new_item = Item(
             related_id=character_id,
@@ -258,23 +493,22 @@ def edit_item(character_id, item_id):
 
     if request.method == 'POST':
         item = Item.query.get(item_id)
+        action = request.form.get('action')  # クリックされたボタンのvalueを取得
 
-        items = request.form
-        for key, value in items.items():
-            if key.startswith("item_") and key.endswith("_name"):
-                select_item_id = int(key.split("_")[1])
-                item.name = value
-            elif key.startswith("item_") and key.endswith("_type"):
-                item.type = value
-            elif key.startswith("item_") and key.endswith("_num"):
-                item.num = value
-            elif key.startswith("item_") and key.endswith("_explain"):
-                item.explain = value
-            elif key.startswith("item_") and key.endswith("_command"):
-                item.command = value
+        if action == 'change':
 
-        db.session.add(item)
-        db.session.commit()
+            item.name = request.form.get(f'item_name-{item_id}')
+            item.type = request.form.get(f'item_type-{item_id}')
+            item.num = request.form.get(f'item_num-{item_id}')
+            item.explain = request.form.get(f'item_explain-{item_id}')
+            item.command = request.form.get(f'item_command-{item_id}')
+
+            db.session.add(item)
+            db.session.commit()
+        
+        elif action == 'delete':
+            db.session.delete(item)
+            db.session.commit()
 
     # 編集後にリダイレクトする
     return redirect(url_for('items', character_id=character_id,item_id=item_id))
@@ -297,28 +531,30 @@ def delete_item(character_id, item_id):
 def add_weapon(character_id):
     from dataclass import Character,Weapon
     if request.method == 'POST':
-        item_name = request.form.get('new_weapon_name[]')
-        item_category = request.form.get('new_weapon_category[]')
-        item_type = request.form.get('new_weapon_type[]')
-        item_weight = request.form.get('new_weapon_weight[]')
-        item_aim = request.form.get('new_weapon_aim[]')
-        item_power = request.form.get('new_weapon_power[]')
-        item_damage = request.form.get('new_weapon_damage[]')
-        item_critical = request.form.get('new_weapon_critical[]')
-        item_explain = request.form.get('new_weapon_explain[]')
-        item_command = request.form.get('new_weapon_command[]')
+        item_name = request.form.get('weapon_name-new')
+        item_category = request.form.get('weapon_category-new')
+        item_rank = request.form.get('weapon_rank-new')
+        item_type = request.form.get('weapon_type-new')
+        item_weight = request.form.get('weapon_weight-new')
+        item_aim = request.form.get('weapon_aim-new')
+        item_power = request.form.get('weapon_power-new')
+        item_damage = request.form.get('weapon_damage-new')
+        item_critical = request.form.get('weapon_critical-new')
+        item_explain = request.form.get('weapon_explain-new')
+        # item_command = request.form.get('new_weapon_command[]')
 
         new_weapon = Weapon(
             name=item_name,
-            category=item_category,
+            カテゴリー=item_category,
+            ランク=item_rank,
             type=item_type,
-            weight=item_weight,
-            aim=item_aim,
-            power=item_power,
-            damage=item_damage,
-            critical=item_critical,
+            必筋=item_weight,
+            命中=item_aim,
+            威力=item_power,
+            追加ダメージ=item_damage,
+            クリティカル=item_critical,
             explain=item_explain,
-            command=item_command,
+            # command=item_command,
             related_id=character_id
         )
         
@@ -333,76 +569,52 @@ def edit_weapon(character_id, weapon_id):
 
     if request.method == 'POST':
         item = Weapon.query.get(weapon_id)
+        action = request.form.get('action')  # クリックされたボタンのvalueを取得
 
-        items = request.form
-        for key, value in items.items():
-            print(key)
-            if key.startswith("weapon_") and key.endswith("_name"):
-                select_item_id = int(key.split("_")[1])
-                item.name = value
-            elif key.startswith("weapon_") and key.endswith("_category"):
-                item.category = value
-            elif key.startswith("weapon_") and key.endswith("_type"):
-                item.type = value
-            elif key.startswith("weapon_") and key.endswith("_rank"):
-                item.rank = value
-            elif key.startswith("weapon_") and key.endswith("_weight"):
-                item.weight = value
-            elif key.startswith("weapon_") and key.endswith("_power"):
-                item.power = value
-            elif key.startswith("weapon_") and key.endswith("_aim"):
-                item.aim = value
-            elif key.startswith("weapon_") and key.endswith("_critical"):
-                item.critical = value
-            elif key.startswith("weapon_") and key.endswith("_damage"):
-                item.damage = value
-            elif key.startswith("weapon_") and key.endswith("_explain"):
-                item.explain = value
+        if action == 'change':
 
-        db.session.add(item)
-        db.session.commit()
+            item.name = request.form[f'weapon_name-{weapon_id}']
+            item.カテゴリー = request.form[f'weapon_category-{weapon_id}']
+            item.ランク = request.form[f'weapon_rank-{weapon_id}']
+            item.type = request.form[f'weapon_type-{weapon_id}']
+            item.必筋 = request.form[f'weapon_weight-{weapon_id}']
+            item.命中 = request.form[f'weapon_aim-{weapon_id}']
+            item.威力 = request.form[f'weapon_power-{weapon_id}']
+            item.クリティカル = request.form[f'weapon_critical-{weapon_id}']
+            item.追加ダメージ = request.form[f'weapon_damage-{weapon_id}']
+            item.explain = request.form[f'weapon_explain-{weapon_id}']
+
+            db.session.add(item)
+            db.session.commit()
+
+        elif action == 'delete':
+            db.session.delete(item)
+            db.session.commit()
 
     # 編集後にリダイレクトする
     return redirect(url_for('items', character_id=character_id,weapon_id=weapon_id))
 
-@app.route('/delete_weapon/<int:character_id>/<int:weapon_id>', methods=['POST'])
-def delete_weapon(character_id, weapon_id):
-    from dataclass import Character,Weapon
-
-    if request.method == 'POST':
-        item = Weapon.query.get(weapon_id)
- 
-        db.session.delete(item)
-        db.session.commit()
-
-    # 編集後にリダイレクトする
-    return redirect(url_for('items', character_id=character_id,weapon_id=weapon_id))
 
 @app.route('/add_protector/<int:character_id>', methods=['POST'])
 def add_protector(character_id):
     from dataclass import Character,Protector
     if request.method == 'POST':
-        item_name = request.form.get('new_protector_name[]')
-        item_defense = request.form.get('new_protector_defense[]')
-        item_weight = request.form.get('new_protector_weight[]')
-        item_evasion = request.form.get('new_protector_evasion[]')
-        item_accuracy = request.form.get('new_protector_accuracy[]')
-        item_explain = request.form.get('new_protector_explain[]')
-        item_command = request.form.get('new_protector_command[]')
 
         new_protector = Protector(
-            name=item_name,
-            defense=item_defense,
-            weight=item_weight,
-            evasion=item_evasion,
-            accuracy=item_accuracy,
-            explain=item_explain,
-            command=item_command,
+            name=request.form.get('protector_name-new'),
+            type=request.form.get('protector_type-new'),
+            ランク=request.form.get('protector_rank-new'),
+            必筋=request.form.get('protector_weight-new'),
+            回避=request.form.get('protector_evasion-new'),
+            命中=request.form.get('protector_accuracy-new'),
+            explain=request.form.get('protector_explain-new'),
+            防護点=request.form.get('protector_defense-new'),
             related_id=character_id
         )
         
         db.session.add(new_protector)
         db.session.commit()
+        
 
     return redirect(url_for('items', character_id=character_id))
 
@@ -411,28 +623,25 @@ def edit_protector(character_id, protector_id):
     from dataclass import Character,Protector
 
     if request.method == 'POST':
+        action = request.form.get('action')  # クリックされたボタンのvalueを取得
         item = Protector.query.get(protector_id)
 
-        items = request.form
-        for key, value in items.items():
-            if key.startswith("protector_") and key.endswith("_name"):
-                select_item_id = int(key.split("_")[1])
-                item.name = value
-            elif key.startswith("protector_") and key.endswith("_type"):
-                item.type = value
-            elif key.startswith("protector_") and key.endswith("_weight"):
-                item.weight = value
-            elif key.startswith("protector_") and key.endswith("_defense"):
-                item.defense = value
-            elif key.startswith("protector_") and key.endswith("_evasion"):
-                item.evasion = value
-            elif key.startswith("protector_") and key.endswith("_accuracy"):
-                item.accuracy = value
-            elif key.startswith("protector_") and key.endswith("_explain"):
-                item.explain = value
+        if action == 'change':
+            item.name = request.form[f'protector_name-{protector_id}']
+            item.ランク = request.form[f'protector_rank-{protector_id}']
+            item.type = request.form[f'protector_type-{protector_id}']
+            item.必筋 = request.form[f'protector_weight-{protector_id}']
+            item.防護点 = request.form[f'protector_defense-{protector_id}']
+            item.回避 = request.form[f'protector_evasion-{protector_id}']
+            item.命中 = request.form[f'protector_accuracy-{protector_id}']
+            item.explain = request.form[f'protector_explain-{protector_id}']
 
-        db.session.add(item)
-        db.session.commit()
+            db.session.add(item)
+            db.session.commit()
+        
+        elif action == 'delete':
+            db.session.delete(item)
+            db.session.commit()
 
     # 編集後にリダイレクトする
     return redirect(url_for('items', character_id=character_id,protector_id=protector_id))
@@ -453,7 +662,7 @@ def delete_protector(character_id, protector_id):
 
 @app.route("/settings/<int:character_id>")
 def settings(character_id):
-    from dataclass import Character,Status,Skills
+    from dataclass import Character,Status
     character = Character.query.get_or_404(character_id)
     return render_template('settings.html', character=character)
 
@@ -468,21 +677,336 @@ def apply(character_id):
     return redirect(url_for('profile', character_id=character_id))
 
 # 新しいルートの追加
+@app.route("/battle_command/<int:character_id>", methods=['GET', 'POST'])
+def battle_command(character_id):
+    from dataclass import Character
+    character = Character.query.get_or_404(character_id)
+    from commands import execute_code # commands.pyから関数をインポート
+    if request.method == 'POST':
+        code_input = request.form.get('command-input', '').strip()  # None の場合は空文字列を使用
+        actor =  request.form['actor-selection']
+        if actor == "自分":
+            actor = character.label
+        targets = request.form.getlist('target-selection')
+
+        if code_input:  # 空でない場合のみ処理を実行
+            result = execute_code(code_input,actor,targets)
+            battle_log.append(result)
+            return jsonify({'result': [result]})
+
+    return redirect(url_for('battlefield', character_id=character_id))
+
+
+# 新しいルートの追加
 @app.route("/command/<int:character_id>", methods=['GET', 'POST'])
 def command(character_id):
-    from dataclass import Character,Status,Skills
+    from dataclass import Character
     character = Character.query.get_or_404(character_id)
     from commands import execute_code # commands.pyから関数をインポート
     if request.method == 'POST':
         code_input = request.form.get('code_input', '').strip()  # None の場合は空文字列を使用
+        actor =  character.label
+        target = ["テストモンスター_本体"]
+
         if code_input:  # 空でない場合のみ処理を実行
-            result = execute_code(code_input)
+            result = execute_code(code_input,actor,target)
             command_logs.append(result)
-            return render_template('command.html', command_logs=command_logs, result=result, character=character)
+
+            return render_template('command.html', command_logs=command_logs, result=result, character=character, command_input=code_input)
         else:
             return render_template('command.html', command_logs=command_logs, result='コマンドが入力されていません。', character=character)
 
     return render_template('command.html', command_logs=command_logs, result='', character=character)
+
+
+# 保存された文字列を格納するリスト
+saved_strings = []
+
+@app.route('/save_string/<int:character_id>', methods=['POST'])
+def save_string(character_id):
+    from dataclass import Character,UserCommand
+
+    character = Character.query.get_or_404(character_id)
+    string_name = request.form.get('string_name')
+    string_content = request.form.get('string_content')
+    string_explain = request.form.get('string_explain')
+    
+    # 保存された文字列を追加
+    saved_strings.append({'name': string_name, 'content': string_content})
+    
+    command = UserCommand.query.filter_by(name=string_name)
+
+    if command != None:
+        if string_name and string_content:
+            new_commands = UserCommand(
+                name=string_name,
+                related_id=character_id,
+                creator=character.label,
+                command=string_content,
+                explain=string_explain
+            )
+            db.session.add(new_commands)
+            db.session.commit()
+            
+    # 保存された文字列を表示するページにリダイレクト
+    return redirect(url_for('saved_strings_page',character_id=character_id))
+
+
+@app.route('/saved_strings/<int:character_id>')
+def saved_strings_page(character_id):
+    from dataclass import Character
+    character = Character.query.get_or_404(character_id)
+    return render_template('saved_strings.html', strings=saved_strings, character=character)
+
+
+@app.route('/user_command_list/<int:character_id>')
+def user_command_list(character_id):
+    from dataclass import Character,UserCommand
+    character = Character.query.get_or_404(character_id)
+
+    # UserCommandからrelated_idがuser_idに一致するコマンドを取得
+    user_commands = UserCommand.query.filter_by(related_id=character.id).all()
+
+    # PublicCommandからすべてのコマンドを取得
+    public_commands = UserCommand.query.filter_by(related_id=0).all()
+
+    return render_template('user_command_list.html', character=character, user_commands=user_commands, public_commands=public_commands)
+
+@app.route('/edit_command/<int:character_id>/<int:command_id>', methods=['POST'])
+def edit_command(character_id,command_id):
+    from dataclass import Character,UserCommand
+    character = Character.query.get_or_404(character_id)
+    command = UserCommand.query.get(command_id)
+    if command:
+        action = request.form.get('action')  # クリックされたボタンのvalueを取得
+        if action == 'save':
+            command.name = request.form['name']
+            command.command = request.form['command']
+            command.explain = request.form['explain']
+            db.session.add(command)
+            db.session.commit()
+        elif action == 'delete':
+            db.session.delete(command)
+            db.session.commit()
+        elif action == 'public':
+            command.related_id = 0
+            db.session.add(command)
+            db.session.commit()
+
+    return redirect(url_for('user_command_list', character_id=character_id))
+
+
+@app.route('/unit/<int:character_id>', methods=['GET', 'POST'])
+def unit(character_id):
+    from dataclass import Character, Unit, SubCharacter
+    character = Character.query.get_or_404(character_id)
+    palyer_units = Unit.query.filter_by(type="player").all()
+    subcharacters = SubCharacter.query.filter_by(related_id=character_id).all()
+
+    monster_units=[]
+    cpu_units=[]
+
+    for subcharacter in subcharacters:    
+        from dataclass import SubCharacterPart
+        parts = SubCharacterPart.query.filter_by(related_id=subcharacter.id).all()
+
+        for part in parts:
+            monster_unit = Unit.query.filter_by(related_id=part.id, type="魔物").all()
+            cpu_unit = Unit.query.filter_by(related_id=part.id, type="CPU").all()
+
+            for unit in monster_unit:
+                if unit.active == True:
+                    monster_units.append(unit)
+            
+            for unit in cpu_unit:
+                if unit.active == True:
+                    cpu_units.append(unit)
+
+    return render_template('unit.html',character=character, palyer_units=palyer_units,cpu_units=cpu_units,monster_units=monster_units)
+
+@app.route('/creare_unit/<int:character_id>/<int:subcharacter_id>', methods=['POST'])
+def creare_unit(character_id, subcharacter_id):
+    
+    from dataclass import Character,SubCharacter,Unit,SubCharacterPart
+    character = Character.query.get_or_404(character_id)
+    subcharacter = SubCharacter.query.get_or_404(subcharacter_id)
+    parts = SubCharacterPart.query.filter_by(related_id=subcharacter_id).all()
+
+    subcharacters = SubCharacter.query.filter_by(related_id=character_id, type="CPU").all()
+    monsters = SubCharacter.query.filter_by(related_id=character_id, type="魔物").all()
+
+    for part in SubCharacterPart.query.filter_by(related_id=subcharacter_id).all():
+        
+        new_unit = Unit(
+            name=request.form.get('name').strip() + "_" + part.name,
+            label=request.form.get('name').strip() + "_" + part.name,
+            related_id=part.id,
+            HP=part.HP,
+            MP=part.MP,
+            MaxHP=part.HP,
+            MaxMP=part.MP,
+            命中 = part.Accuracy,
+            回避 = part.Evasion,
+            防護点 = part.Defence,
+            先制力 = part.Require_Quickness,
+            魔物知識 = part.Knowledge,
+            魔物知識要求値 = part.Require_knowledge,
+            生命抵抗 = part.VID,
+            精神抵抗 = part.MND,
+            詳細 = part.detail,
+            弱点 = part.weakpoint,
+            基本ダメージ = part.damage,
+            magic_power = part.magic_power,
+            type = subcharacter.type,
+            active = True
+        )
+
+        db.session.add(new_unit)
+        db.session.commit()
+
+    return render_template('subcharacter.html', character=character, subcharacters=subcharacters, monsters=monsters)
+
+@app.route('/edit_unit/<int:character_id>/<int:unit_id>', methods=['POST'])
+def edit_unit(character_id,unit_id):
+    from dataclass import Character,Unit,Status,Job,Equipment
+    character = Character.query.get_or_404(character_id)
+    unit = Unit.query.get(unit_id)
+    myStatus = Status.query.filter_by(related_id=unit.related_id).first()
+
+    if unit:
+        action = request.form.get('action')  # クリックされたボタンのvalueを取得
+        if action == 'save':
+            unit.name = request.form[f'name-{unit_id}']
+            unit.HP = request.form[f'HP-{unit_id}']
+            unit.MP = request.form[f'MP-{unit_id}']
+            unit.detail = request.form[f'detail-{unit_id}']
+            db.session.add(unit)
+            db.session.commit()
+        elif action == 'delete':
+            db.session.delete(unit)
+            db.session.commit()
+        elif action == 'reset':
+            unitstatus = unit.GetCharacterUnit()
+
+            db.session.add(unitstatus)
+            db.session.commit()
+
+    return redirect(url_for('unit', character_id=character_id))
+
+
+@app.route('/add_equipment/<int:character_id>', methods=['POST'])
+def add_equipment(character_id):
+    from dataclass import Character,Equipment
+    if request.method == 'POST':
+
+        PartList = ["head","face","ear","neck","back","right_hand","left_hand","waist","feet","other"]
+        
+        for part in PartList:
+            myEquipment = Equipment.query.filter_by(related_id=character_id, type=part).first()
+            if myEquipment is None:
+                new_eq = Equipment(
+                related_id=character_id,
+                name = request.form.get(f'{part}_name'),
+                type=part,
+                explain = request.form.get(f'{part}_explain'),
+                )
+                
+                db.session.add(new_eq)
+                db.session.commit()
+
+            else:
+                myEquipment.name = request.form.get(f'{part}_name')
+                myEquipment.explain = request.form.get(f'{part}_explain')
+                myEquipment.dex = request.form.get(f'{part}_dex')
+                myEquipment.agi = request.form.get(f'{part}_agi')
+                myEquipment.str = request.form.get(f'{part}_str')
+                myEquipment.vit = request.form.get(f'{part}_vit')
+                myEquipment.int = request.form.get(f'{part}_int')
+                myEquipment.mnd = request.form.get(f'{part}_mnd')
+                myEquipment.dfn = request.form.get(f'{part}_def')
+                myEquipment.evs = request.form.get(f'{part}_evs')
+                myEquipment.dmg = request.form.get(f'{part}_dmg')
+                myEquipment.acr = request.form.get(f'{part}_acr')
+                myEquipment.knowledge = request.form.get(f'{part}_knowledge')
+                myEquipment.quickness = request.form.get(f'{part}_quickness')
+                myEquipment.magic = request.form.get(f'{part}_magic')
+                myEquipment.HP = request.form.get(f'{part}_HP')
+                myEquipment.MP = request.form.get(f'{part}_MP')
+                myEquipment.VITREG = request.form.get(f'{part}_VITREG')
+                myEquipment.MNDREG = request.form.get(f'{part}_MNDREG')
+        
+                db.session.add(myEquipment)
+                db.session.commit()
+
+    return redirect(url_for('items', character_id=character_id))
+
+@app.route('/add_memo/<int:character_id>', methods=['POST'])
+def add_memo(character_id):
+    from dataclass import Character,Equipment,Memo
+    if request.method == 'POST':
+        myMemo = Memo.query.filter_by(related_id=character_id).first()
+        if myMemo is None:
+            new_memo = Memo(
+            related_id=character_id,
+            content = request.form.get('memo_content'),
+            )
+            
+            db.session.add(new_memo)
+            db.session.commit()
+        else:
+            myMemo.content = request.form.get('memo_content')
+
+            db.session.add(myMemo)
+            db.session.commit()
+
+        return redirect(url_for('items', character_id=character_id))
+
+
+@app.route('/add_skill/<int:character_id>', methods=['POST'])
+def add_skill(character_id):
+    from dataclass import Skill
+    if request.method == 'POST':
+
+        newSkill = Skill(
+            related_id = character_id,
+            getlevel = request.form.get('battle_skill_level'),
+            name = request.form.get('battle_skill_name'),
+            getway = request.form.get('battle_skill_way'),
+            explain = request.form.get('battle_skill_explain'),
+            command = request.form.get('battle_skill_command'),
+            type = request.form.get('battle_skill_type')
+        )
+
+        db.session.add(newSkill)
+        db.session.commit()
+
+    return redirect(url_for('profile', character_id=character_id))
+
+@app.route('/edit_skill/<int:character_id>/<int:skill_id>', methods=['POST'])
+def edit_skill(character_id,skill_id):
+    from dataclass import Skill
+    if request.method == 'POST':
+        action = request.form.get('action')  # クリックされたボタンのvalueを取得
+        mySkill = Skill.query.filter_by(id=skill_id).first()
+
+        if action == 'change':
+            mySkill.getlevel = request.form.get(f'battlelevel_{skill_id}')
+            mySkill.name = request.form.get(f'{mySkill.name}')
+            mySkill.getway = request.form.get(f'battleway_{skill_id}')
+            mySkill.explain = request.form.get(f'battleexplain_{skill_id}')
+            # mySkill.command = request.form.get(f'battlecomand_{skill_id}')
+            mySkill.type = request.form.get(f'battletype_{skill_id}')
+
+            db.session.add(mySkill)
+            db.session.commit()
+
+        elif action == 'delete':
+            db.session.add(mySkill)
+            db.session.commit()
+
+    return redirect(url_for('profile', character_id=character_id))
+    
+
 
 if __name__ == "__main__":
     app.run(port=8000, host="0.0.0.0", debug=True)

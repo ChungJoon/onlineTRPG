@@ -4,60 +4,95 @@
     <meta charset="UTF-8">
     <title>{% block title %}ページ{% endblock %}</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        /* カスタムナビゲーションタブのスタイル */
-        .custom-navbar {
-            width: 200px;
-            position: fixed;
-            left: 0;
-            top: 50px;
-            background-color: #f1f1f1;
-            padding: 10px;
-            height: 100%; /* タブをページ全体の高さに伸ばす */
-            box-shadow: 2px 0 5px rgba(0,0,0,0.1); /* タブの右に影を追加 */
+        
+        /* ダークモード対応 */
+        body {
+            background-color: #1a202c; /* Dark background */
+            color: #a0aec0; /* Light text */
         }
-        .custom-navbar a {
-            display: block;
-            padding: 8px 16px; /* 内側の余白を調整 */
-            text-decoration: none;
-            color: black;
-            margin-bottom: 10px;
-            border-left: 4px solid transparent; /* アクティブ状態のインジケータを追加 */
+        .dark-mode .character-image {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
         }
-        .custom-navbar a:hover {
-            background-color: #ddd;
+        /* 入力フィールドのデザイン */
+        input, select, textarea {
+            background-color: #2d3748; /* Darker input background */
+            color: #cbd5e0; /* Light input text */
+            border-color: #4a5568; /* Darker border */
         }
-        .custom-navbar a.active {
-            background-color: #007bff; /* アクティブリンクの背景色 */
-            color: white;
-            border-left: 4px solid #0056b3; /* アクティブ状態のインジケータ */
+        /* サイドバーのスタイル */
+        #default-sidebar {
+            border-right: 2px solid #4a5568; /* サイドバーの右側にボーダーを追加 */
         }
-        .custom-content {
-            margin-left: 220px; /* ナビゲーションタブの幅に応じてコンテンツの左マージンを調整 */
-            padding: 20px;
+        /* リンクのスタイル */
+        .sidebar-link {
+            color: #a0aec0;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            border-radius: 0.375rem;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .sidebar-link:hover {
+            background-color: #2d3748;
+            color: #f7fafc;
+        }
+
+        /* スペーシングとボーダー調整 */
+        .sidebar-link + .sidebar-link {
+            margin-top: 0.25rem;
         }
         {% block style %}{% endblock %}
     </style>
 </head>
-<body>
+<body class="dark-mode text-yellow-300">
     <!-- カスタムナビゲーションタブ -->
-    <div class="custom-navbar">
-        <a href="{{ url_for('home', character_id=character.id) }}" class="{% if request.path == '/home' %}active{% endif %}">ホーム</a>
-        <a href="{{ url_for('login2', character_id=character.id) }}" class="{% if request.path == '/login' %}active{% endif %}">ログインフォーム</a>
-        <a href="{{ url_for('profile', character_id=character.id)}}" class="{% if request.path == '/profile' %}active{% endif %}">プロフィール</a>
-        <a href="{{ url_for('items', character_id=character.id)}}" class="{% if request.path == '/items' %}active{% endif %}">装備</a>
-        <a href="{{ url_for('settings', character_id=character.id) }}" class="{% if request.path == '/settings' %}active{% endif %}">設定</a>
-        <a href="{{ url_for('command', character_id=character.id) }}" class="{% if request.path == '/command' %}active{% endif %}">コマンド実行</a>
+    <aside id="default-sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full sm:translate-x-0" aria-label="Sidebar">
+   	<div class="h-full px-3 py-4 overflow-y-auto dark:bg-gray-800">
+	   	<ul class="space-y-2 font-medium">
+	    <li>
+	        <a href="{{ url_for('home', character_id=character.id) }}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"">ホーム</a>
+	    </li>
+        <li>
+	        <a href="{{ url_for('login2', character_id=character.id) }}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"">ログインフォーム</a>
+	    </li>
+        <li>
+	        <a href="{{ url_for('profile', character_id=character.id)}}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"">プロフィール</a>
+	    </li>
+        <li>
+	        <a href="{{ url_for('items', character_id=character.id)}}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"}">装備</a>
+	    </li>
+        <li>
+	        <a href="{{ url_for('settings', character_id=character.id) }}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">設定</a>
+	    </li>
+        <li>
+	        <a href="{{ url_for('user_command_list', character_id=character.id) }}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">コマンド設定</a>
+    	</li>
+    	<li>
+	        <a href="{{ url_for('subcharacter', character_id=character.id) }}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">CPU/魔物一覧</a>
+    	</li>
+    	<li>
+	        <a href="{{ url_for('unit', character_id=character.id) }}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">ユニット一覧</a>
+    	</li>
+    	<li>
+	        <a href="{{ url_for('battlefield', character_id=character.id) }}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">バトル</a>
+    	</li>
+    	</ul>
     </div>
+    </aside>
 
     <!-- コンテンツ -->
     <div class="custom-content">
+    	<div class="p-4 sm:ml-64">
         {% block content %}{% endblock %}
+        </div>
     </div>
+
 
 	<!-- スクリプト -->
 	<div class="custom-scrirpt">
-	    {% block scrirpt %}{% endblock %}
+	    {% block script %}{% endblock %}
 	</div>
 </body>
 </html>

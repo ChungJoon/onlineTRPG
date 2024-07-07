@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}
+Command Execution
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-silver-400 mb-4">ユニット一覧</h1>
+	
+    <!-- Unitの一覧表示 -->
+    <h2 class="text-2xl font-semibold text-green-400 mb-2">プレイヤー</h2>
+    <ul class="flex flex-wrap -mx-2">
+        {% for unit in palyer_units %}
+            <li class="bg-gray-800 p-4 rounded shadow-md w-full lg:w-1/2 xl:w-1/3 2xl:w-1/5 p-2">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold">{{ unit.label }}</h3>
+                        <p class="text-green-300">HP : {{ unit.HP }}/{{ unit.MaxHP }}  MP :{{ unit.MP }}/{{ unit.MaxMP }} </p>
+                        <p class="text-sm text-gray-400">{{ unit.detail }}</p>
+                    </div>
+                    <button onclick="showEditForm({{ unit.id }})" class="text-blue-500 hover:text-blue-700 ml-4 w-12">編集</button>
+                </div>
+                <form id="edit-form-{{ unit.id }}" class="hidden" method="POST" action="{{ url_for('edit_unit', character_id=character.id, unit_id=unit.id) }}">
+                    <div class="space-y-2 mt-2">
+                    	<input type="hidden" id="name-{{ unit.id }}" name="name-{{ unit.id }}" value="{{ unit.label }}" class="block">
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="HP-{{ unit.id }}" class="block text-sm font-medium text-gray-200">HP:</label>
+	                            <input type="number" id="HP-{{ unit.id }}" name="HP-{{ unit.id }}" value="{{ unit.HP }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="MP-{{ unit.id }}" class="block text-sm font-medium text-gray-200">MP:</label>
+	                            <input type="number" id="MP-{{ unit.id }}" name="MP-{{ unit.id }}" value="{{ unit.MP }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2 mr-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="accuracy-{{ unit.id }}" class="block text-sm font-medium text-gray-200">命中:</label>
+	                            <input type="number" id="accuracy-{{ unit.id }}" name="accuracy-{{ unit.id }}" value="{{ unit.命中 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="evasion-{{ unit.id }}" class="block text-sm font-medium text-gray-200">回避:</label>
+	                            <input type="number" id="evasion-{{ unit.id }}" name="evasion-{{ unit.id }}" value="{{ unit.回避}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="VID-{{ unit.id }}" class="block text-sm font-medium text-gray-200">生命抵抗:</label>
+	                            <input type="number" id="VID-{{ unit.id }}" name="VID-{{ unit.id }}" value="{{ unit.生命抵抗 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="MND-{{ unit.id }}" class="block text-sm font-medium text-gray-200">精神抵抗:</label>
+	                            <input type="number" id="MND-{{ unit.id }}" name="MND-{{ unit.id }}" value="{{ unit.精神抵抗}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="knowledge-{{ unit.id }}" class="block text-sm font-medium text-gray-200">魔物知識:</label>
+	                            <input type="number" id="knowledge-{{ unit.id }}" name="knowledge-{{ unit.id }}" value="{{ unit.魔物知識 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="quickness-{{ unit.id }}" class="block text-sm font-medium text-gray-200">先制力:</label>
+	                            <input type="number" id="quickness-{{ unit.id }}" name="quickness-{{ unit.id }}" value="{{ unit.先制力}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="mr-2">
+                            <label for="detail-{{ unit.id }}" class="block text-sm font-medium text-gray-200">詳細:</label>
+                            <input type="text" id="detail-{{ unit.id }}" name="detail-{{ unit.id }}" value="{{ unit.詳細 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        </div>
+                        <div>
+                            <button type="submit" name="action" value="save" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">保存</button>
+                        	<button type="submit" name="action" value="reset" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2">初期化</button>
+                        </div>
+                    </div>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- CPUの一覧表示 -->
+    <h2 class="text-2xl font-semibold text-blue-400 mt-6 mb-2">CPU</h2>
+    <ul class="flex flex-wrap -mx-2">
+        {% for unit in cpu_units %}
+            <li class="bg-gray-800 p-4 rounded shadow-md w-full lg:w-1/2 xl:w-1/3 2xl:w-1/5 p-2">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold">{{ unit.name }}</h3>
+                        <p class="text-green-300">HP : {{ unit.HP }}/{{ unit.MaxHP }}  MP :{{ unit.MP }}/{{ unit.MaxMP }} </p>
+                        <p class="text-sm text-gray-400">{{ unit.detail }}</p>
+                    </div>
+                    <button onclick="showEditForm({{ unit.id }})" class="text-blue-500 hover:text-blue-700 w-12">編集</button>
+                </div>
+                <form id="edit-form-{{ unit.id }}" class="hidden" method="POST" action="{{ url_for('edit_unit', character_id=character.id, unit_id=unit.id) }}">
+                    <div class="space-y-2 mt-2">
+                        <div>
+                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">名前:</label>
+                            <input type="text" id="name-{{ unit.id }}" name="name-{{ unit.id }}" value="{{ unit.name }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        </div>
+                        <div class="flex">
+                        	<div>
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">HP:</label>
+	                            <input type="number" id="HP-{{ unit.id }}" name="HP-{{ unit.id }}" value="{{ unit.HP }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div>
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">MP:</label>
+	                            <input type="number" id="MP-{{ unit.id }}" name="MP-{{ unit.id }}" value="{{ unit.MP }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div>
+                            <label for="detail-{{ unit.id }}" class="block text-sm font-medium text-gray-200">説明:</label>
+                            <input type="text" id="detail-{{ unit.id }}" name="detail-{{ unit.id }}" value="{{ unit.detail }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        </div>
+                        <div>
+                            <button type="submit" name="action" value="save" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">保存</button>
+                            <button type="submit" name="action" value="delete" class="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">削除</button>
+                        </div>
+                    </div>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+    
+    <!-- 魔物の一覧表示 -->
+    <h2 class="text-2xl font-semibold text-red-400 mt-6 mb-2">魔物</h2>
+    <ul class="flex flex-wrap -mx-2">
+        {% for unit in monster_units %}
+            <li class="bg-gray-800 p-4 rounded shadow-md w-full lg:w-1/2 xl:w-1/3 2xl:w-1/5 p-2">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold">{{ unit.name }}</h3>
+                        <p class="text-green-300">HP : {{ unit.HP }}/{{ unit.MaxHP }}  MP :{{ unit.MP }}/{{ unit.MaxMP }} </p>
+                        <p class="text-sm text-gray-400">{{ unit.detail }}</p>
+                    </div>
+                    <button onclick="showEditForm({{ unit.id }})" class="text-blue-500 hover:text-blue-700 w-12">編集</button>
+                </div>
+                <form id="edit-form-{{ unit.id }}" class="hidden" method="POST" action="{{ url_for('edit_unit', character_id=character.id, unit_id=unit.id) }}">
+                    <div class="space-y-2 mt-2">
+                        <div>
+                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">名前:</label>
+                            <input type="text" id="name-{{ unit.id }}" name="name-{{ unit.id }}" value="{{ unit.name }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        </div>
+                        <div class="flex">
+                        	<div>
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">HP:</label>
+	                            <input type="number" id="HP-{{ unit.id }}" name="HP-{{ unit.id }}" value="{{ unit.HP }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div>
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">MP:</label>
+	                            <input type="number" id="MP-{{ unit.id }}" name="MP-{{ unit.id }}" value="{{ unit.MP }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div>
+                            <label for="detail-{{ unit.id }}" class="block text-sm font-medium text-gray-200">説明:</label>
+                            <input type="text" id="detail-{{ unit.id }}" name="detail-{{ unit.id }}" value="{{ unit.detail }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        </div>
+                        <div>
+                            <button type="submit" name="action" value="save" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">保存</button>
+                            <button type="submit" name="action" value="delete" class="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">削除</button>
+                        </div>
+                    </div>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
+{% block script %}
+<!-- JavaScript for showing/hiding the edit forms -->
+    <script>
+        function showEditForm(commandId) {
+            var form = document.getElementById('edit-form-' + commandId);
+            if (form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+            } else {
+                form.classList.add('hidden');
+            }
+        }
+    </script>
+{% endblock %}

@@ -1,0 +1,95 @@
+<!-- settings.html -->
+{% extends "base.html" %}
+{% block title %}設定{% endblock %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+	<h1 class="text-3xl font-bold text-silver-400 mb-4">CPU・魔物一覧</h1>
+
+	<a href="{{ url_for('create_subcharacter', character_id=character.id) }}" class="text-2xl items-center p-2 text-green-500 hover:text-green-700">＋CPU・魔物の新規作成</a>
+	
+	<br><br>
+	
+	<!-- CPUの一覧表示 -->
+    <h2 class="text-2xl font-semibold text-blue-400 mb-2">CPU</h2>
+    <ul class="space-y-2">
+        {% for subcharacter in subcharacters %}
+            <li class="bg-gray-800 p-4 rounded shadow-md lg:w-full xl:w-1/2 2xl:w-1/3 3xl:w-1/4 p-2">
+            <form id="edit-form-{{ subcharacter.id }}" method="POST" action="{{ url_for('open_edit_subcharacter', character_id=character.id, subcharacter_id=subcharacter.id) }}">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold">{{ subcharacter.name }}</h3>
+                        <p>レベル:{{ subcharacter.Level }}</p>
+                        <p class="text-sm text-gray-400">{{ subcharacter.detail }}</p>
+                    </div>
+	                <div>
+	                    <button type="submit" class="text-xl text-blue-500 hover:text-blue-700 mr-4">編集</button>
+	                </div>
+                </div>
+            </form>
+            <button onclick="showEditForm({{ subcharacter.id }})" class="text-xl text-green-400 hover:text-green-600 mt-4">ユニット作成</button>
+            
+            <form class="hidden" id="edit-form2-{{ subcharacter.id }}" method="POST" action="{{ url_for('creare_unit', character_id=character.id, subcharacter_id=subcharacter.id) }}">
+	            <div class="space-y-2 mt-2">
+	                <div class="flex">
+	                	<div>
+		                    <label for="name-{{ subcharacter.id }}" class="block font-medium text-gray-200">ユニット名</label>
+		                    <input type="text" id="name-{{ subcharacter.id }}" name="name" value="{{ subcharacter.name }}" class="block w-80 bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+	                	</div>
+	                	<button type="submit" class="text-xl text-red-500 hover:text-red-700 ml-4 mt-4">作成</button>
+	                </div>
+	            </div>
+            </form>
+                
+            </li>
+        {% endfor %}
+    </ul>
+    
+    <!-- 魔物の一覧表示 -->
+    <h2 class="text-2xl font-semibold text-red-400 mb-2 mt-4">魔物</h2>
+    <ul class="space-y-2">
+        {% for subcharacter in monsters %}
+            <li class="bg-gray-800 p-4 rounded shadow-md xl:w-1/2 2xl:w-1/3 3xl:w-1/4">
+            <form id="edit-form-{{ subcharacter.id }}" method="POST" action="{{ url_for('open_edit_subcharacter', character_id=character.id, subcharacter_id=subcharacter.id) }}">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold">{{ subcharacter.name }}</h3>
+                        <p>魔物レベル:{{ subcharacter.Level }}</p>
+                        <p class="text-sm text-gray-400">{{ subcharacter.detail }}</p>
+                    </div>
+                    <div>
+	                    <button type="submit" class="text-xl text-blue-500 hover:text-blue-700 mr-4">編集</button>
+	                </div>
+                </div>
+            </form>
+            <button onclick="showEditForm({{ subcharacter.id }})" class="text-xl text-green-400 hover:text-green-600 mt-4">ユニット作成</button>
+            
+            <form class="hidden" id="edit-form2-{{ subcharacter.id }}" method="POST" action="{{ url_for('creare_unit', character_id=character.id, subcharacter_id=subcharacter.id) }}">
+	            <div class="space-y-2 mt-2">
+	                <div class="flex">
+	                	<div>
+		                    <label for="name-{{ subcharacter.id }}" class="block font-medium text-gray-200">ユニット名</label>
+		                    <input type="text" id="name-{{ subcharacter.id }}" name="name" value="{{ subcharacter.name }}" class="block w-80 bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+	                	</div>
+	                	<button type="submit" class="text-xl text-red-500 hover:text-red-700 ml-4 mt-4">作成</button>
+	                </div>
+	            </div>
+            </form>
+                
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}
+
+{% block script %}
+<!-- JavaScript for showing/hiding the edit forms -->
+    <script>
+        function showEditForm(commandId) {
+            var form = document.getElementById('edit-form2-' + commandId);
+            if (form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+            } else {
+                form.classList.add('hidden');
+            }
+        }
+    </script>
+{% endblock %}
