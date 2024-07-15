@@ -2,6 +2,7 @@ from flask import Flask, request, render_template, redirect, url_for, session, f
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect,func
 from flask_cors import CORS
+from jinja2 import Template
 
 db = SQLAlchemy()
 
@@ -17,6 +18,14 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 CORS(app)
+
+# Custom filter to use getattr in Jinja2 templates
+@app.template_filter('getattr')
+def getattr_filter(obj, attr):
+    return getattr(obj, attr)
+
+# Register the filter with Jinja2
+app.jinja_env.filters['getattr'] = getattr_filter
 
 # コマンドのログを保存するリスト
 command_logs = []
@@ -257,7 +266,7 @@ def create_subcharacter(character_id):
                             Accuracy = request.form.get(f'{partkey}Accuracy'),
                             Evasion = request.form.get(f'{partkey}Evasion'),
                             Defence = request.form.get(f'{partkey}Defence'),
-                            Require_Quickness = request.form.get(f'{partkey}Require_Quickness'),
+                            Quickness = request.form.get(f'{partkey}Require_Quickness'),
                             Knowledge = request.form.get(f'{partkey}Knowledge'),
                             Require_knowledge = request.form.get(f'{partkey}Require_knowledge'),
                             VID = request.form.get(f'{partkey}VID'),
@@ -322,7 +331,7 @@ def edit_subcharacter(character_id,subcharacter_id):
                                 Accuracy = request.form.get(f'{partkey}Accuracy'),
                                 Evasion = request.form.get(f'{partkey}Evasion'),
                                 Defence = request.form.get(f'{partkey}Defence'),
-                                Require_Quickness = request.form.get(f'{partkey}Require_Quickness'),
+                                Quickness = request.form.get(f'{partkey}Require_Quickness'),
                                 Knowledge = request.form.get(f'{partkey}Knowledge'),
                                 Require_knowledge = request.form.get(f'{partkey}Require_knowledge'),
                                 VID = request.form.get(f'{partkey}VID'),
@@ -347,7 +356,7 @@ def edit_subcharacter(character_id,subcharacter_id):
                             subpart.Accuracy = request.form.get(f'{partkey}Accuracy'),
                             subpart.Evasion = request.form.get(f'{partkey}Evasion'),
                             subpart.Defence = request.form.get(f'{partkey}Defence'),
-                            subpart.Require_Quickness = request.form.get(f'{partkey}Require_Quickness'),
+                            subpart.Quickness = request.form.get(f'{partkey}Require_Quickness'),
                             subpart.Knowledge = request.form.get(f'{partkey}Knowledge'),
                             subpart.Require_knowledge = request.form.get(f'{partkey}Require_knowledge'),
                             subpart.VID = request.form.get(f'{partkey}VID'),
@@ -432,7 +441,7 @@ def edit_job(character_id, skill_id):
 
 @app.route('/items/<int:character_id>', methods=['GET', 'POST'])
 def items(character_id):
-    from dataclass import Character,Item,Weapon,Protector,Equipment,Memo
+    from dataclass import Character,Item,Weapon,Protector,Equipment,Memo,Bullet,BulletBox
     character = Character.query.get_or_404(character_id)
     # Item情報を取得
     weapons = Weapon.query.filter_by(related_id=character.id).all()
@@ -442,6 +451,24 @@ def items(character_id):
     items = Item.query.filter_by(related_id=character.id).all()
     # メモ情報を取得    
     myMemo = Memo.query.filter_by(related_id=character_id).first()
+    # 弾を取得  
+    mybullets = {bullet.id: bullet for bullet in Bullet.query.filter_by(related_id=character_id).all()}
+    bullets = Bullet.query.filter_by(related_id=character_id).all()
+    # 弾倉を取得  
+    bulletboxes = []
+    for weapon in weapons:
+        bulletbox = BulletBox.query.filter_by(related_id=weapon.id).first()
+        box_dict = {
+            'id': bulletbox.id,
+            'weapon_name': bulletbox.weapon_name,
+            'maxbullet': bulletbox.maxbullet,
+            'bullets': []
+        }
+        for i in range(1, bulletbox.maxbullet + 1):
+            col_name = f'col{i}'
+            bullet_id = getattr(bulletbox, col_name)
+            box_dict['bullets'].append(bullet_id)
+        bulletboxes.append(box_dict)
 
     Head = Equipment.query.filter_by(related_id=character_id, type="head").first()
     Face = Equipment.query.filter_by(related_id=character_id, type="face").first()
@@ -457,8 +484,8 @@ def items(character_id):
     return render_template('items.html', character=character,items=items, weapons=weapons,
                            protectors=protectors, weapon_categories=WEAPON_CATEGORIES,
                            Head=Head,Face=Face,Ear=Ear,Neck=Neck,Back=Back,RightHand=RightHand,
-                           LeftHand=LeftHand,Waist=Waist,Feet=Feet,Other=Other,Memo=myMemo)
-
+                           LeftHand=LeftHand,Waist=Waist,Feet=Feet,Other=Other,Memo=myMemo,
+                           bullets=bullets,bulletboxes=bulletboxes,mybullets=mybullets)
 
 
 @app.route('/add_item/<int:character_id>', methods=['POST'])
@@ -541,7 +568,7 @@ def add_weapon(character_id):
         item_damage = request.form.get('weapon_damage-new')
         item_critical = request.form.get('weapon_critical-new')
         item_explain = request.form.get('weapon_explain-new')
-        # item_command = request.form.get('new_weapon_command[]')
+        item_command = request.form.get('weapon_command-new')
 
         new_weapon = Weapon(
             name=item_name,
@@ -554,7 +581,7 @@ def add_weapon(character_id):
             追加ダメージ=item_damage,
             クリティカル=item_critical,
             explain=item_explain,
-            # command=item_command,
+            command=item_command,
             related_id=character_id
         )
         
@@ -582,6 +609,7 @@ def edit_weapon(character_id, weapon_id):
             item.威力 = request.form[f'weapon_power-{weapon_id}']
             item.クリティカル = request.form[f'weapon_critical-{weapon_id}']
             item.追加ダメージ = request.form[f'weapon_damage-{weapon_id}']
+            item.command = request.form[f'weapon_command-{weapon_id}']
             item.explain = request.form[f'weapon_explain-{weapon_id}']
 
             db.session.add(item)
@@ -607,6 +635,7 @@ def add_protector(character_id):
             必筋=request.form.get('protector_weight-new'),
             回避=request.form.get('protector_evasion-new'),
             命中=request.form.get('protector_accuracy-new'),
+            command=request.form.get('protector_command-new'),
             explain=request.form.get('protector_explain-new'),
             防護点=request.form.get('protector_defense-new'),
             related_id=character_id
@@ -634,6 +663,7 @@ def edit_protector(character_id, protector_id):
             item.防護点 = request.form[f'protector_defense-{protector_id}']
             item.回避 = request.form[f'protector_evasion-{protector_id}']
             item.命中 = request.form[f'protector_accuracy-{protector_id}']
+            item.command = request.form[f'protector_command-{protector_id}']
             item.explain = request.form[f'protector_explain-{protector_id}']
 
             db.session.add(item)
@@ -848,7 +878,7 @@ def creare_unit(character_id, subcharacter_id):
             命中 = part.Accuracy,
             回避 = part.Evasion,
             防護点 = part.Defence,
-            先制力 = part.Require_Quickness,
+            先制力 = part.Quickness,
             魔物知識 = part.Knowledge,
             魔物知識要求値 = part.Require_knowledge,
             生命抵抗 = part.VID,
@@ -879,7 +909,49 @@ def edit_unit(character_id,unit_id):
             unit.name = request.form[f'name-{unit_id}']
             unit.HP = request.form[f'HP-{unit_id}']
             unit.MP = request.form[f'MP-{unit_id}']
+            unit.MaxHP = request.form[f'MaxHP-{unit_id}']
+            unit.MaxMP = request.form[f'MaxMP-{unit_id}']
+            unit.命中 = request.form[f'accuracy-{unit_id}']
+            unit.回避 = request.form[f'evasion-{unit_id}']
+            unit.基本ダメージ = request.form[f'damage-{unit_id}']
+            unit.防護点 = request.form[f'defence-{unit_id}']
+            unit.魔力 = request.form[f'magic-{unit_id}']
+            unit.生命抵抗 = request.form[f'VID-{unit_id}']
+            unit.精神抵抗 = request.form[f'MND-{unit_id}']
+            unit.魔物知識 = request.form[f'knowledge-{unit_id}']
+            unit.先制力 = request.form[f'quickness-{unit_id}']
+            unit.MP軽減 = request.form[f'mpcut-{unit_id}']
+            unit.DEX = request.form[f'DEX-{unit_id}']
+            unit.STR = request.form[f'STR-{unit_id}']
+            unit.AGI = request.form[f'AGI-{unit_id}']
+            unit.VIT = request.form[f'VIT-{unit_id}']
+            unit.INT = request.form[f'INT-{unit_id}']
+            unit.MND = request.form[f'MND-{unit_id}']
+            unit.魔力ボーナス = request.form[f'magicbonus-{unit_id}']
+            unit.クリティカルボーナス = request.form[f'criticalbonus-{unit_id}']
+            unit.魔法クリティカル = request.form[f'magiccritical-{unit_id}']
+            unit.先制ボーナス = request.form[f'quickbonus-{unit_id}']
+            unit.知識ボーナス = request.form[f'knowbonus-{unit_id}']
+            unit.回復ボーナス = request.form[f'healbonus-{unit_id}']
+            unit.魔法行使判定 = request.form[f'magicchallengebonus-{unit_id}']
+
             unit.detail = request.form[f'detail-{unit_id}']
+            db.session.add(unit)
+            db.session.commit()
+        elif action == 'set':
+            unit.HP = request.form[f'HP-{unit_id}']
+            unit.MP = request.form[f'MP-{unit_id}']
+            unit.基本ダメージ = request.form[f'damage-{unit_id}']
+            unit.魔力 = request.form[f'magic-{unit_id}']
+            unit.命中 = request.form[f'accuracy-{unit_id}']
+            unit.回避 = request.form[f'evasion-{unit_id}']
+            unit.防護点 = request.form[f'defence-{unit_id}']
+            unit.精神抵抗 = request.form[f'MND-{unit_id}']
+            unit.生命抵抗 = request.form[f'VID-{unit_id}']
+            unit.魔物知識 = request.form[f'knowledge-{unit_id}']
+            unit.先制力 = request.form[f'quickness-{unit_id}']
+            unit.魔物知識要求値 = request.form[f'Require_knowledge-{unit_id}']
+            unit.弱点 = request.form[f'weakpoint-{unit_id}']
             db.session.add(unit)
             db.session.commit()
         elif action == 'delete':
@@ -923,17 +995,9 @@ def add_equipment(character_id):
                 myEquipment.vit = request.form.get(f'{part}_vit')
                 myEquipment.int = request.form.get(f'{part}_int')
                 myEquipment.mnd = request.form.get(f'{part}_mnd')
-                myEquipment.dfn = request.form.get(f'{part}_def')
-                myEquipment.evs = request.form.get(f'{part}_evs')
-                myEquipment.dmg = request.form.get(f'{part}_dmg')
-                myEquipment.acr = request.form.get(f'{part}_acr')
-                myEquipment.knowledge = request.form.get(f'{part}_knowledge')
-                myEquipment.quickness = request.form.get(f'{part}_quickness')
-                myEquipment.magic = request.form.get(f'{part}_magic')
                 myEquipment.HP = request.form.get(f'{part}_HP')
                 myEquipment.MP = request.form.get(f'{part}_MP')
-                myEquipment.VITREG = request.form.get(f'{part}_VITREG')
-                myEquipment.MNDREG = request.form.get(f'{part}_MNDREG')
+                myEquipment.command = request.form.get(f'{part}_command')
         
                 db.session.add(myEquipment)
                 db.session.commit()
@@ -994,19 +1058,274 @@ def edit_skill(character_id,skill_id):
             mySkill.name = request.form.get(f'{mySkill.name}')
             mySkill.getway = request.form.get(f'battleway_{skill_id}')
             mySkill.explain = request.form.get(f'battleexplain_{skill_id}')
-            # mySkill.command = request.form.get(f'battlecomand_{skill_id}')
+            mySkill.command = request.form.get(f'battlecomand_{skill_id}')
             mySkill.type = request.form.get(f'battletype_{skill_id}')
 
             db.session.add(mySkill)
             db.session.commit()
 
         elif action == 'delete':
-            db.session.add(mySkill)
+            db.session.delete(mySkill)
             db.session.commit()
 
     return redirect(url_for('profile', character_id=character_id))
-    
 
+@app.route('/add_bullet/<int:character_id>', methods=['POST'])
+def add_bullet(character_id):
+    from dataclass import Bullet
+    if request.method == 'POST':
+
+        newbullet = Bullet(
+            related_id = character_id,
+            個数 = request.form.get('個数-new'),
+            name = request.form.get('bullet_name-new'),
+            補正ダメージ = request.form.get('補正ダメージ-new'),
+            explain = request.form.get('battle_bullet_explain'),
+            command = request.form.get('battle_bullet_command'),
+            補正命中 = request.form.get('補正命中-new'),
+            消費MP = request.form.get('消費MP-new')
+        )
+
+        db.session.add(newbullet)
+        db.session.commit()
+
+    return redirect(url_for('items', character_id=character_id))
+
+@app.route('/edit_bullet/<int:character_id>/<int:bullet_id>', methods=['POST'])
+def edit_bullet(character_id,bullet_id):
+    from dataclass import Bullet
+    if request.method == 'POST':
+        action = request.form.get('action')  # クリックされたボタンのvalueを取得
+        mybullet = Bullet.query.filter_by(id=bullet_id).first()
+
+        if action == 'change':
+            mybullet.個数 = request.form.get(f'個数-{bullet_id}')
+            mybullet.name = request.form.get(f'bullet_name-{bullet_id}')
+            mybullet.補正ダメージ = request.form.get(f'補正ダメージ-{bullet_id}')
+            mybullet.explain = request.form.get(f'bullet_explain-{bullet_id}')
+            mybullet.command = request.form.get(f'bullet_command-{bullet_id}')
+            mybullet.補正命中 = request.form.get(f'補正命中-{bullet_id}')
+            mybullet.消費MP = request.form.get(f'消費MP-{bullet_id}')
+
+            db.session.add(mybullet)
+            db.session.commit()
+
+        elif action == 'delete':
+            db.session.delete(mybullet)
+            db.session.commit()
+
+    return redirect(url_for('items', character_id=character_id))
+
+@app.route('/create_bulletbox/<int:character_id>', methods=['POST'])
+def create_bulletbox(character_id):
+    from dataclass import BulletBox,Weapon
+    weapon_id = request.form.get('bulletbox_weapon_id')
+    maxbullet = request.form.get('maxbullet')
+
+    weapon = Weapon.query.get_or_404(weapon_id)
+
+    new_bulletbox = BulletBox(
+        weapon_name=weapon.name,
+        related_id=weapon_id,
+        maxbullet=maxbullet
+    )
+
+    db.session.add(new_bulletbox)
+    db.session.commit()
+    return redirect(url_for('items', character_id=character_id))
+
+@app.route('/edit_bulletbox/<int:character_id>/<int:bulletbox_id>', methods=['POST'])
+def edit_bulletbox(character_id,bulletbox_id):
+    from dataclass import BulletBox
+    if request.method == 'POST':
+        action = request.form.get('action')  # クリックされたボタンのvalueを取得
+        mybullet = BulletBox.query.filter_by(id=bulletbox_id).first()
+
+        if action == 'change':
+            for i in range(1, mybullet.maxbullet + 1):
+                col_name = f'col{i}'
+                bullet_id = request.form.get(f'bullet_box-{mybullet.id}-{i}')
+                setattr(mybullet, col_name, bullet_id)
+
+            db.session.commit()
+
+        elif action == 'delete':
+            db.session.delete(mybullet)
+            db.session.commit()
+
+    return redirect(url_for('items', character_id=character_id))
+
+
+@app.route('/commandlist/<int:character_id>')
+def commandlist(character_id):
+    from dataclass import Character
+    character = Character.query.get_or_404(character_id)
+    commands = [
+        {
+            'name': 'dice(x,y)',
+            'description': 'x:ダイスの数,y:面の数',
+            'return': '合計値',
+            'details': '任意の数・面のダイスを振り合計値を取得する。'
+        },
+        {
+            'name': 'getstatus(unit_name,status_name)',
+            'description': 'unit_name:ユニットの名前, status_name:ステータスの名前',
+            'return': 'ステータス値',
+            'details': '指定されたユニットの特定のステータスを取得する。'
+        },
+        {
+            'name': 'setstatus(unit_name,status_name,status_value)',
+            'description': 'unit_name:ユニットの名前, status_name:ステータスの名前, status_value:ステータスの変化量',
+            'return': 'ステータス値',
+            'details': '指定されたユニットの特定のステータスを変更する。'
+        },
+        {
+            'name': 'getweapon(weapon_id,status_name)',
+            'description': 'weapon_id:武器のid, status_name:ステータスの名前',
+            'return': 'ステータス値',
+            'details': '指定されたユニットの特定のステータスを取得する。'
+        },
+        {
+            'name': 'getprotector(protector_id,status_name)',
+            'description': 'protector_id:防具の名id, status_name:ステータスの名前',
+            'return': 'ステータス値',
+            'details': '指定されたユニットの特定のステータスを取得する。'
+        },
+        {
+            'name': 'power(power,dice)',
+            'description': 'power:威力, dice:ダイス値',
+            'return': 'ステータス値',
+            'details': '威力表の該当する値を取得する。'
+        },
+        {
+            'name': 'physical_attack(weapon_id)',
+            'description': 'weapon_id:使用する武器のID',
+            'return': 'ダメージ値',
+            'details': 'ターゲットに対する物理攻撃を行い、ダメージ値を取得する。'
+        },
+        {
+            'name': 'magical_attack(power,mp,magictype)',
+            'description': 'power:魔法の威力, mp:消費MP, magictype:魔法の分類(真語魔法、操霊魔法など)',
+            'return': 'ダメージ値',
+            'details': 'ターゲットに対する魔法攻撃を行い、ダメージ値を取得する。'
+        },
+        {
+            'name': 'shoot_attack(power,weapon_id)',
+            'description': 'power:武器の威力, weapon_id:使用する武器のID',
+            'return': 'ダメージ値',
+            'details': 'ターゲットに対する射撃攻撃を行い、ダメージ値を取得する。'
+        },
+        {
+            'name': 'magishoot_attack(power,mp,weapon_id)',
+            'description': 'power:武器の威力, mp:消費MP, weapon_id:使用する武器のID',
+            'return': 'ダメージ値',
+            'details': 'ターゲットに対して魔法を乗せた射撃攻撃を行い、ダメージ値を取得する。'
+        },
+        {
+            'name': 'attack(critical,damage)',
+            'description': 'critical:クリティカル値, damage:打撃点',
+            'return': 'ダメージ値',
+            'details': 'モンスター用。ターゲットに対してダイス+打撃点の攻撃を行い、ダメージ値を取得する。'
+        },
+        {
+            'name': 'challenge(bonus,targetstatus)',
+            'description': 'bonus:判定ボーナス値, targetstatus:ステータス名',
+            'return': 'True/False',
+            'details': '自分のダイス＋ボーナス値と相手のダイス＋ステータス値で達成値比較'
+        },
+        {
+            'name': 'challenge_status(mystatus,targetstatus)',
+            'description': 'mystatus:ステータス名, targetstatus:ステータス名',
+            'return': 'True/False',
+            'details': '自分と相手のステータス補正込みで達成値比較'
+        },
+        {
+            'name': 'getsum(a,b,c...)',
+            'description': '任意の数字の列',
+            'return': '合計値',
+            'details': '合計値を取得する。'
+        },
+        {
+            'name': 'getmax(a,b,c...)',
+            'description': '任意の数字の列',
+            'return': '最大値',
+            'details': '最大値を取得する。'
+        },
+        {
+            'name': 'getmin(a,b,c...)',
+            'description': '任意の数字の列',
+            'return': '最小値',
+            'details': '最小値を取得する。'
+        },
+        {
+            'name': 'plus(x,y)',
+            'description': 'x:任意の数,y:任意の数',
+            'return': '数字の和',
+            'details': 'x+yをする。'
+        },
+        {
+            'name': 'minus(x,y)',
+            'description': 'x:任意の数,y:任意の数',
+            'return': '数字の差',
+            'details': 'x-yをする。'
+        },
+        {
+            'name': 'multiply(x,y)',
+            'description': 'x:任意の数,y:任意の数',
+            'return': '数字の積',
+            'details': 'x*yをする。'
+        },
+        {
+            'name': 'divide(x,y)',
+            'description': 'x:任意の数,y:任意の数',
+            'return': '数字の商',
+            'details': 'x/yをする。余りは切り捨て。'
+        },
+        {
+            'name': 'ifmore(x,y)',
+            'description': 'x:任意の数,y:任意の数',
+            'return': 'True/False',
+            'details': 'x>yを判定する。'
+        },
+        {
+            'name': 'ifless(x,y)',
+            'description': 'x:任意の数,y:任意の数',
+            'return': 'True/False',
+            'details': 'x<yを判定する。'
+        },
+        {
+            'name': 'ifequal(x,y)',
+            'description': 'x:任意の数,y:任意の数',
+            'return': 'True/False',
+            'details': 'x=yを判定する。'
+        },
+        {
+            'name': 'ifeqmore(x,y)',
+            'description': 'x:任意の数,y:任意の数',
+            'return': 'True/False',
+            'details': 'x>=yを判定する。'
+        },
+        {
+            'name': 'ifeqless(x,y)',
+            'description': 'x:任意の数,y:任意の数',
+            'return': 'True/False',
+            'details': 'x<=yを判定する。'
+        },
+        {
+            'name': 'actionif(bool,action)',
+            'description': 'bool:TrueまたはFalseまたはreturnがTrue/Falseのコマンド,action:任意のコマンド',
+            'return': 'コマンドのreturn値',
+            'details': '判定がTureの時のみ実行する。'
+        },
+        {
+            'name': 'loop(trigger,action,bool)',
+            'description': 'trigger:ループに突入するか判断するreturnがTrue/Falseのコマンド,action:任意のコマンド,bool:ループ継続するか判断するreturnがTrue/Falseのコマンド',
+            'return': 'コマンドのreturn値',
+            'details': '判定がTureの限り繰り返し実行する。無限ループ防止のため上下２０回'
+        },
+        # 他のコマンドを追加
+    ]
+    return render_template('commandlist.html', commands=commands, character=character)
 
 if __name__ == "__main__":
     app.run(port=8000, host="0.0.0.0", debug=True)

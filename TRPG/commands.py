@@ -113,6 +113,10 @@ def execute_single_command(command):
     getweapon_command_pattern = r'^getweapon\(([^,]+),\s*([^,]+)\)$'
     # getprotector(x,y) コマンドを処理する
     getprotector_command_pattern = r'^getprotector\(([^,]+),\s*([^,]+)\)$'
+    # shoot_attack(x,y) コマンドを処理する
+    shoot_attack_command_pattern = r'^shoot_attack\((\d+),(\d+)\)$'
+    # magishoot_attack(x,y) コマンドを処理する
+    magishoot_attack_command_pattern = r'^magishoot_attack\((\d+),(\d+),(\d+)\)$'
 
     match = re.match(power_command_pattern, command)
     if match:
@@ -220,6 +224,14 @@ def execute_single_command(command):
     if match:
         return getprotector(match.group(1),match.group(2))
     
+    match = re.match(magishoot_attack_command_pattern, command)
+    if match:
+        return magishoot_attack(match.group(1),match.group(2),match.group(3))
+    
+    match = re.match(shoot_attack_command_pattern, command)
+    if match:
+        return shoot_attack(match.group(1),match.group(2))
+    
     else:
         log_message = "サポートされていないコマンドです。"
         return log_message, None
@@ -230,7 +242,7 @@ def loop(init, code, trigger):
     log_messages = ''
     result = '1'
     bool = sub_code(init)[1]
-    while bool == True and count < 10:
+    while bool == True and count < 20:
         count +=  1
         command = copy.copy(trigger)
         log_message,result = sub_code(code)
@@ -357,12 +369,12 @@ def getweapon(weapon_id,status_name):
         
     return log_message,status_value
 
-def getprotector(weapon_id,status_name):
+def getprotector(protetor_id,status_name):
     from dataclass import Protector
-    weapon = Protector.query.filter_by(id=weapon_id).first()
+    weapon = Protector.query.filter_by(id=protetor_id).first()
 
     if weapon is None:
-        log_message = f"ID{weapon_id}の防具が存在しません"
+        log_message = f"ID{protetor_id}の防具が存在しません"
         return log_message,None
     else:
         try:
@@ -639,7 +651,7 @@ def magical_attack(mpower,mp,magictype):
     # MP消費
     mp = int(mp)
     mp = -mp
-    print("mp"+str(mp))
+
     message, newHP = setstatus(Actor,"MP",mp)
     log_message += message
 
@@ -696,6 +708,162 @@ def magical_attack(mpower,mp,magictype):
             log_message += message
 
     return log_message, damage_value
+
+def shoot_attack(wpower,weapon_id):
+    from dataclass import BulletBox,Bullet
+
+    log_message = "" 
+
+    mybox = BulletBox.query.filter_by(related_id=weapon_id).first()
+    mybullet = Bullet.query.filter_by(id=mybox.col1).first()
+
+    # ユニット情報
+    criticalbonus = getstatus(Actor,"クリティカルボーナス")[1]
+    unitaccuracy = getstatus(Actor,"命中")[1]
+    basicdamage = getstatus(Actor,"基本ダメージ")[1]
+    # 武器情報
+    weaponcritical = getweapon(weapon_id,"クリティカル")[1]
+    weaponaccuracy = getweapon(weapon_id,"命中")[1]
+    # 弾情報
+    bulletacr = mybullet.補正命中
+    bulletdmg = mybullet.補正ダメージ
+    bulletmp = mybullet.消費MP
+
+    mp = -int(bulletmp) 
+    message, newMP = setstatus(Actor,"MP",mp)
+    log_message += message
+
+    criticalbonus = 0
+
+    mybox = usebullet(mybox)
+
+    # 命中判定
+    Accuracy = int(unitaccuracy) + int(weaponaccuracy) + int(bulletacr)
+    message, bool, dicevalue = challenge(Accuracy,"回避")
+    log_message += message
+
+    # ダメージ結果
+    powerdamage = power(int(wpower),int(dicevalue))[1]
+    # 物理＋威力のダイスダメージ
+    maindamage = powerdamage + int(bulletdmg) + int(basicdamage)
+    damage_value = maindamage
+
+    cvalue=0
+    # クリティカル計算
+    critical_line = 10 - int(criticalbonus)
+    if dicevalue >= int(critical_line):
+        message, cvalue = criticalloop(critical_line,wpower)
+        log_message += "クリティカル計算:" + message
+        damage_value = maindamage + cvalue
+
+    # ターゲットに対するダメージ計算
+    for target in Targets:
+        if challengebool[target] == True:
+            message = f" >> {target}に{damage_value}のダメージを与えます"
+            log_message += message
+
+            actualdamage = (damage_value) * (-1)
+            message, newHP = setstatus(target,"HP",actualdamage)
+            
+        else:
+            message = f" >> {target}は回避しました"
+            log_message += message
+
+    return log_message, damage_value
+
+
+def magishoot_attack(mpower,mp,weapon_id):
+    from dataclass import Unit,UserMagic,BulletBox,Bullet,Weapon
+
+    mybox = BulletBox.query.filter_by(related_id=weapon_id).first()
+
+    if mybox.col1 is None or mybox.col1 == "":
+        log_message = "不発！弾がありません"
+        damage_value = 0
+        return log_message, damage_value
+
+    mybullet = Bullet.query.filter_by(id=mybox.col1).first()
+    if mybullet is None:
+        log_message = "不発！弾がありません"
+        damage_value = 0
+        return log_message, damage_value
+
+    # ユニット情報
+    criticalbonus = getstatus(Actor,"クリティカルボーナス")[1]
+    unitaccuracy = getstatus(Actor,"命中")[1]
+    # 武器情報
+    weaponcritical = getweapon(weapon_id,"クリティカル")[1]
+    weaponaccuracy = getweapon(weapon_id,"命中")[1]
+    # 弾情報
+    bulletacr = mybullet.補正命中
+    bulletdmg = mybullet.補正ダメージ
+    bulletmp = mybullet.消費MP
+
+    # MP消費
+    mp = int(mp) + int(bulletmp)
+    log_message = f"MPを{mp}消費します "
+    mp = -mp
+
+    message, newMP = setstatus(Actor,"MP",mp)
+    log_message += message
+
+    # 使用する魔法の基本ダメージ計算
+    unit = Unit.query.filter_by(name=Actor).first()
+    magic = UserMagic.query.filter_by(related_id=unit.id,name="魔動機術").first()
+    magiclevel = magic.level
+    magicbonus = getstatus(Actor,"魔力ボーナス")[1]
+    magicpower = int(magiclevel) + int(magicbonus)
+
+    criticalbonus = 0
+
+    log_message += f" 魔動機術レベル:{magiclevel} 威力:{mpower} 魔力:{magicpower} >> "
+
+    mybox = usebullet(mybox)
+
+    # 命中判定
+    Accuracy = int(unitaccuracy) + int(weaponaccuracy) + int(bulletacr)
+    message, bool, dicevalue = challenge(Accuracy,"回避")
+    log_message += message
+
+    # ダメージ結果
+    powerdamage = power(int(mpower),int(dicevalue))[1]
+    # 魔力＋威力のダイスダメージ
+    maindamage = magicpower + powerdamage + int(bulletdmg)
+    damage_value = maindamage
+
+    cvalue=0
+    # クリティカル計算
+    critical_line = 10 - int(criticalbonus)
+    if dicevalue >= int(critical_line):
+        message, cvalue = criticalloop(critical_line,mpower)
+        log_message += "クリティカル計算:" + message
+        damage_value = maindamage + cvalue
+
+    # ターゲットに対するダメージ計算
+    for target in Targets:
+        if challengebool[target] == True:
+            message = f" >> {target}に{damage_value}のダメージを与えます"
+            log_message += message
+
+            actualdamage = (damage_value) * (-1)
+            message, newHP = setstatus(target,"HP",actualdamage)
+            
+        else:
+            message = f" >> {target}は回避しました"
+            log_message += message
+
+    return log_message, damage_value
+
+def usebullet(mybox):
+    for i in range(mybox.maxbullet-1):
+        cola = f'col{i+2}'
+        colb = f'col{i+1}'
+        bid = getattr(mybox,cola)
+        setattr(mybox,colb,bid)
+        db.session.add(mybox)
+        db.session.commit()
+    
+    return mybox
 
 def criticalloop(critical,powerscore):
     log_message, dvalue = dice(2,6)

@@ -153,6 +153,10 @@
                         	</div>
                         </div>
                         <div class="mr-12 w-full">
+	                        <label for="weapon_command-{{ weapon.id }}" class="block text-sm font-medium">コマンド:</label>
+	                        <textarea id="weapon_command-{{ weapon.id }}" name="weapon_command-{{ weapon.id }}" class="block w-full" class="block w-full mr-8">{{ weapon.command }}</textarea>
+	                	</div>
+                        <div class="mr-12 w-full">
 	                        <label for="weapon_explain-{{ weapon.id }}" class="block text-sm font-medium">備考:</label>
 	                        <textarea id="weapon_explain-{{ weapon.id }}" name="weapon_explain-{{ weapon.id }}" class="block w-full" class="block w-full mr-8">{{ weapon.explain }}</textarea>
 	                	</div>
@@ -162,7 +166,7 @@
 	                    </div>
                     </div>
                 </form>
-            <li>
+            </li>
         {% endfor %}
     </ul>
 	
@@ -216,6 +220,10 @@
 	                    <input type="number" id="weapon_damage-new" name="weapon_damage-new" class="block w-full">
 	            	</div>
 	            </div>
+	            <div class="mr-12 w-full">
+	                <label for="weapon_command-new" class="block text-sm font-medium">コマンド:</label>
+	                <textarea id="weapon_command-new" name="weapon_command-new" class="block w-full mr-8" row=2></textarea>
+	        	</div>
 	            <div class="mr-12 w-full">
 	                <label for="weapon_explain-new" class="block text-sm font-medium">備考:</label>
 	                <textarea id="weapon_explain-new" name="weapon_explain-new" class="block w-full mr-8" row=2></textarea>
@@ -309,6 +317,10 @@
                         	</div>
                         </div>
                         <div class="mr-12 w-full">
+	                        <label for="protector_command-{{ protector.id }}" class="block text-sm font-medium">コマンド:</label>
+	                        <textarea id="protector_command-{{ protector.id }}" name="protector_command-{{ protector.id }}" class="block w-full" class="block w-full mr-8">{{ protector.command }}</textarea>
+	                	</div>
+                        <div class="mr-12 w-full">
 	                        <label for="protector_explain-{{ protector.id }}" class="block text-sm font-medium">備考:</label>
 	                        <textarea id="protector_explain-{{ protector.id }}" name="protector_explain-{{ protector.id }}" class="block w-full" class="block w-full mr-8">{{ protector.explain }}</textarea>
 	                	</div>
@@ -318,7 +330,7 @@
 	                    </div>
                     </div>
                 </form>
-            <li>
+            </li>
         {% endfor %}
     </ul>
 	
@@ -363,6 +375,10 @@
 	                    <input type="number" id="protector_evasionr-new" name="protector_evasion-new" class="block w-full">
 	            	</div>
 	            </div>
+	            <div class="mr-2 w-full">
+                    <label for="protector_command-new" class="block text-sm font-medium">コマンド:</label>
+                    <input type="text" id="protector_command-new" name="protector_command-new" class="block w-full">
+            	</div>
 	            <div class="mr-12 w-full">
 	                <label for="protector_explain-new" class="block text-sm font-medium">備考:</label>
 	                <textarea id="protector_explain-new" name="protector_explain-new" class="block w-full mr-8" row=2></textarea>
@@ -437,7 +453,7 @@
 	                    </div>
                     </div>
                 </form>
-            <li>
+            </li>
         {% endfor %}
     </ul>
 	
@@ -488,8 +504,9 @@
 	        <tr>
 	            <th rowspan="2" class="border-solid border-2 border-gray-500 text-center w-12">部位</th>
 	            <th rowspan="2" style="width: 17%;" class="border-solid border-2 border-gray-500 text-center">装備名</th>
-	            <th rowspan="2" style="width: 25%;" class="border-solid border-2 border-gray-500 text-center">備考</th>
-	            <th colspan="17" class="border-solid border-2 border-gray-500 text-center">ボーナス補正</th>
+	            <th rowspan="2" style="width: 24%;" class="border-solid border-2 border-gray-500 text-center">備考</th>
+	            <th colspan="8" class="border-solid border-2 border-gray-500 text-center">ボーナス補正</th>
+	            <th rowspan="2" style="width: 16%;" class="border-solid border-2 border-gray-500 text-center">コマンド</th>
 	        </tr>
 	        <tr>
 	            <th class="border-solid border-2 border-gray-500 text-center w-12">器用</th>
@@ -498,17 +515,8 @@
 	            <th class="border-solid border-2 border-gray-500 text-center w-12">生命</th>
 	            <th class="border-solid border-2 border-gray-500 text-center w-12">知力</th>
 	            <th class="border-solid border-2 border-gray-500 text-center w-12">精神</th>
-	            <th class="border-solid border-2 border-gray-500 text-center w-12">防御</th>
-	            <th class="border-solid border-2 border-gray-500 text-center w-12">回避</th>
-	            <th class="border-solid border-2 border-gray-500 text-center w-12">打点</th>
-	            <th class="border-solid border-2 border-gray-500 text-center w-12">命中</th>
-	            <th class="border-solid border-2 border-gray-500 text-center w-12">知識</th>
-	            <th class="border-solid border-2 border-gray-500 text-center w-12">先制</th>
-	            <th class="border-solid border-2 border-gray-500 text-center w-12">魔力</th>
 	            <th class="border-solid border-2 border-gray-500 text-center w-12">HP</th>
 	            <th class="border-solid border-2 border-gray-500 text-center w-12">MP</th>
-	            <th class="border-solid border-2 border-gray-500 text-center w-12">生低</th>
-	            <th class="border-solid border-2 border-gray-500 text-center w-12">精抵</th>
 	        </tr>
 	    </thead>
 	    <tbody id="items-tbody-item">
@@ -522,17 +530,9 @@
 	            <td><input type="number" name="head_vit" class="w-full" value="{{ Head.vit }}"></td>
 	            <td><input type="number" name="head_int" class="w-full" value="{{ Head.int }}"></td>
 	            <td><input type="number" name="head_mnd" class="w-full" value="{{ Head.mnd }}"></td>
-	            <td><input type="number" name="head_def" class="w-full" value="{{ Head.dfn }}"></td>
-	            <td><input type="number" name="head_evs" class="w-full" value="{{ Head.evs }}"></td>
-	            <td><input type="number" name="head_dmg" class="w-full" value="{{ Head.dmg }}"></td>
-	            <td><input type="number" name="head_acr" class="w-full" value="{{ Head.acr }}"></td>
-	            <td><input type="number" name="head_knowledge" class="w-full" value="{{ Head.knowledge }}"></td>
-	            <td><input type="number" name="head_quickness" class="w-full" value="{{ Head.quickness }}"></td>
-	            <td><input type="number" name="head_magic" class="w-full" value="{{ Head.magic }}"></td>
 	            <td><input type="number" name="head_HP" class="w-full" value="{{ Head.HP }}"></td>
 	            <td><input type="number" name="head_MP" class="w-full" value="{{ Head.MP }}"></td>
-	            <td><input type="number" name="head_VITREG" class="w-full" value="{{ Head.VITREG }}"></td>
-	            <td><input type="number" name="head_MNDREG" class="w-full" value="{{ Head.MNDREG }}"></td>
+	            <td><input type="text" name="head_command" class="w-full" value="{{ Head.command }}"></td>
 	        </tr>
 	        <tr>
 	            <td><input type="text" name="face_type" class="w-full text-yellow-300 text-center" readonly value="顔"></td>
@@ -544,17 +544,9 @@
 	            <td><input type="number" name="face_vit" class="w-full" value="{{ Face.vit }}"></td>
 	            <td><input type="number" name="face_int" class="w-full" value="{{ Face.int }}"></td>
 	            <td><input type="number" name="face_mnd" class="w-full" value="{{ Face.mnd }}"></td>
-	            <td><input type="number" name="face_def" class="w-full" value="{{ Face.dfn }}"></td>
-	            <td><input type="number" name="face_evs" class="w-full" value="{{ Face.evs }}"></td>
-	            <td><input type="number" name="face_dmg" class="w-full" value="{{ Face.dmg }}"></td>
-	            <td><input type="number" name="face_acr" class="w-full" value="{{ Face.acr }}"></td>
-	            <td><input type="number" name="face_knowledge" class="w-full" value="{{ Face.knowledge }}"></td>
-	            <td><input type="number" name="face_quickness" class="w-full" value="{{ Face.quickness }}"></td>
-	            <td><input type="number" name="face_magic" class="w-full" value="{{ Face.magic }}"></td>
 	            <td><input type="number" name="face_HP" class="w-full" value="{{ Face.HP }}"></td>
 	            <td><input type="number" name="face_MP" class="w-full" value="{{ Face.MP }}"></td>
-	            <td><input type="number" name="face_VITREG" class="w-full" value="{{ Face.VITREG }}"></td>
-	            <td><input type="number" name="face_MNDREG" class="w-full" value="{{ Face.MNDREG }}"></td>
+	            <td><input type="text" name="face_command" class="w-full" value="{{ Face.command }}"></td>
 	        </tr>
 	        <!-- 耳 -->
 	        <tr>
@@ -567,17 +559,9 @@
 	            <td><input type="number" name="ear_vit" class="w-full" value="{{ Ear.vit }}"></td>
 	            <td><input type="number" name="ear_int" class="w-full" value="{{ Ear.int }}"></td>
 	            <td><input type="number" name="ear_mnd" class="w-full" value="{{ Ear.mnd }}"></td>
-	            <td><input type="number" name="ear_def" class="w-full" value="{{ Ear.dfn }}"></td>
-	            <td><input type="number" name="ear_evs" class="w-full" value="{{ Ear.evs }}"></td>
-	            <td><input type="number" name="ear_dmg" class="w-full" value="{{ Ear.dmg }}"></td>
-	            <td><input type="number" name="ear_acr" class="w-full" value="{{ Ear.acr }}"></td>
-	            <td><input type="number" name="ear_knowledge" class="w-full" value="{{ Ear.knowledge }}"></td>
-	            <td><input type="number" name="ear_quickness" class="w-full" value="{{ Ear.quickness }}"></td>
-	            <td><input type="number" name="ear_magic" class="w-full" value="{{ Ear.magic }}"></td>
 	            <td><input type="number" name="ear_HP" class="w-full" value="{{ Ear.HP }}"></td>
 	            <td><input type="number" name="ear_MP" class="w-full" value="{{ Ear.MP }}"></td>
-	            <td><input type="number" name="ear_VITREG" class="w-full" value="{{ Ear.VITREG }}"></td>
-	            <td><input type="number" name="ear_MNDREG" class="w-full" value="{{ Ear.MNDREG }}"></td>
+	            <td><input type="text" name="ear_command" class="w-full" value="{{ Ear.command }}"></td>
 	        </tr>
 
 	        <!-- 首 -->
@@ -591,17 +575,9 @@
 	            <td><input type="number" name="neck_vit" class="w-full" value="{{ Neck.vit }}"></td>
 	            <td><input type="number" name="neck_int" class="w-full" value="{{ Neck.int }}"></td>
 	            <td><input type="number" name="neck_mnd" class="w-full" value="{{ Neck.mnd }}"></td>
-	            <td><input type="number" name="neck_def" class="w-full" value="{{ Neck.dfn }}"></td>
-	            <td><input type="number" name="neck_evs" class="w-full" value="{{ Neck.evs }}"></td>
-	            <td><input type="number" name="neck_dmg" class="w-full" value="{{ Neck.dmg }}"></td>
-	            <td><input type="number" name="neck_acr" class="w-full" value="{{ Neck.acr }}"></td>
-	            <td><input type="number" name="neck_knowledge" class="w-full" value="{{ Neck.knowledge }}"></td>
-	            <td><input type="number" name="neck_quickness" class="w-full" value="{{ Neck.quickness }}"></td>
-	            <td><input type="number" name="neck_magic" class="w-full" value="{{ Neck.magic }}"></td>
 	            <td><input type="number" name="neck_HP" class="w-full" value="{{ Neck.HP }}"></td>
 	            <td><input type="number" name="neck_MP" class="w-full" value="{{ Neck.MP }}"></td>
-	            <td><input type="number" name="neck_VITREG" class="w-full" value="{{ Neck.VITREG }}"></td>
-	            <td><input type="number" name="neck_MNDREG" class="w-full" value="{{ Neck.MNDREG }}"></td>
+	            <td><input type="text" name="neck_command" class="w-full" value="{{ Neck.command }}"></td>
 	        </tr>
 
 	        <!-- 背中 -->
@@ -615,17 +591,9 @@
 	            <td><input type="number" name="back_vit" class="w-full" value="{{ Back.vit }}"></td>
 	            <td><input type="number" name="back_int" class="w-full" value="{{ Back.int }}"></td>
 	            <td><input type="number" name="back_mnd" class="w-full" value="{{ Back.mnd }}"></td>
-	            <td><input type="number" name="back_def" class="w-full" value="{{ Back.dfn }}"></td>
-	            <td><input type="number" name="back_evs" class="w-full" value="{{ Back.evs }}"></td>
-	            <td><input type="number" name="back_dmg" class="w-full" value="{{ Back.dmg }}"></td>
-	            <td><input type="number" name="back_acr" class="w-full" value="{{ Back.acr }}"></td>
-	            <td><input type="number" name="back_knowledge" class="w-full" value="{{ Back.knowledge }}"></td>
-	            <td><input type="number" name="back_quickness" class="w-full" value="{{ Back.quickness }}"></td>
-	            <td><input type="number" name="back_magic" class="w-full" value="{{ Back.magic }}"></td>
 	            <td><input type="number" name="back_HP" class="w-full" value="{{ Back.HP }}"></td>
 	            <td><input type="number" name="back_MP" class="w-full" value="{{ Back.MP }}"></td>
-	            <td><input type="number" name="back_VITREG" class="w-full" value="{{ Back.VITREG }}"></td>
-	            <td><input type="number" name="back_MNDREG" class="w-full" value="{{ Back.MNDREG }}"></td>
+	            <td><input type="text" name="back_command" class="w-full" value="{{ Back.command }}"></td>
 	        </tr>
 
 	        <!-- 右手 -->
@@ -639,17 +607,9 @@
 	            <td><input type="number" name="right_hand_vit" class="w-full" value="{{ RightHand.vit }}"></td>
 	            <td><input type="number" name="right_hand_int" class="w-full" value="{{ RightHand.int }}"></td>
 	            <td><input type="number" name="right_hand_mnd" class="w-full" value="{{ RightHand.mnd }}"></td>
-	            <td><input type="number" name="right_hand_def" class="w-full" value="{{ RightHand.dfn }}"></td>
-	            <td><input type="number" name="right_hand_evs" class="w-full" value="{{ RightHand.evs }}"></td>
-	            <td><input type="number" name="right_hand_dmg" class="w-full" value="{{ RightHand.dmg }}"></td>
-	            <td><input type="number" name="right_hand_acr" class="w-full" value="{{ RightHand.acr }}"></td>
-	            <td><input type="number" name="right_hand_knowledge" class="w-full" value="{{ RightHand.knowledge }}"></td>
-	            <td><input type="number" name="right_hand_quickness" class="w-full" value="{{ RightHand.quickness }}"></td>
-	            <td><input type="number" name="right_hand_magic" class="w-full" value="{{ RightHand.magic }}"></td>
 	            <td><input type="number" name="right_hand_HP" class="w-full" value="{{ RightHand.HP }}"></td>
 	            <td><input type="number" name="right_hand_MP" class="w-full" value="{{ RightHand.MP }}"></td>
-	            <td><input type="number" name="right_hand_VITREG" class="w-full" value="{{ RightHand.VITREG }}"></td>
-	            <td><input type="number" name="right_hand_MNDREG" class="w-full" value="{{ RightHand.MNDREG }}"></td>
+	            <td><input type="text" name="right_hand_command" class="w-full" value="{{ RightHand.command }}"></td>
 	        </tr>
 
 	        <!-- 左手 -->
@@ -663,17 +623,9 @@
 	            <td><input type="number" name="left_hand_vit" class="w-full" value="{{ LeftHand.vit }}"></td>
 	            <td><input type="number" name="left_hand_int" class="w-full" value="{{ LeftHand.int }}"></td>
 	            <td><input type="number" name="left_hand_mnd" class="w-full" value="{{ LeftHand.mnd }}"></td>
-	            <td><input type="number" name="left_hand_def" class="w-full" value="{{ LeftHand.dfn }}"></td>
-	            <td><input type="number" name="left_hand_evs" class="w-full" value="{{ LeftHand.evs }}"></td>
-	            <td><input type="number" name="left_hand_dmg" class="w-full" value="{{ LeftHand.dmg }}"></td>
-	            <td><input type="number" name="left_hand_acr" class="w-full" value="{{ LeftHand.acr }}"></td>
-	            <td><input type="number" name="left_hand_knowledge" class="w-full" value="{{ LeftHand.knowledge }}"></td>
-	            <td><input type="number" name="left_hand_quickness" class="w-full" value="{{ LeftHand.quickness }}"></td>
-	            <td><input type="number" name="left_hand_magic" class="w-full" value="{{ LeftHand.magic }}"></td>
 	            <td><input type="number" name="left_hand_HP" class="w-full" value="{{ LeftHand.HP }}"></td>
 	            <td><input type="number" name="left_hand_MP" class="w-full" value="{{ LeftHand.MP }}"></td>
-	            <td><input type="number" name="left_hand_VITREG" class="w-full" value="{{ LeftHand.VITREG }}"></td>
-	            <td><input type="number" name="left_hand_MNDREG" class="w-full" value="{{ LeftHand.MNDREG }}"></td>
+	            <td><input type="text" name="left_hand_command" class="w-full" value="{{ LeftHand.command }}"></td>
 	        </tr>
 
 	        <!-- 腰 -->
@@ -687,17 +639,9 @@
 	            <td><input type="number" name="waist_vit" class="w-full" value="{{ Waist.vit }}"></td>
 	            <td><input type="number" name="waist_int" class="w-full" value="{{ Waist.int }}"></td>
 	            <td><input type="number" name="waist_mnd" class="w-full" value="{{ Waist.mnd }}"></td>
-	            <td><input type="number" name="waist_def" class="w-full" value="{{ Waist.dfn }}"></td>
-	            <td><input type="number" name="waist_evs" class="w-full" value="{{ Waist.evs }}"></td>
-	            <td><input type="number" name="waist_dmg" class="w-full" value="{{ Waist.dmg }}"></td>
-	            <td><input type="number" name="waist_acr" class="w-full" value="{{ Waist.acr }}"></td>
-	            <td><input type="number" name="waist_knowledge" class="w-full" value="{{ Waist.knowledge }}"></td>
-	            <td><input type="number" name="waist_quickness" class="w-full" value="{{ Waist.quickness }}"></td>
-	            <td><input type="number" name="waist_magic" class="w-full" value="{{ Waist.magic }}"></td>
 	            <td><input type="number" name="waist_HP" class="w-full" value="{{ Waist.HP }}"></td>
 	            <td><input type="number" name="waist_MP" class="w-full" value="{{ Waist.MP }}"></td>
-	            <td><input type="number" name="waist_VITREG" class="w-full" value="{{ Waist.VITREG }}"></td>
-	            <td><input type="number" name="waist_MNDREG" class="w-full" value="{{ Waist.MNDREG }}"></td>
+	            <td><input type="text" name="waist_command" class="w-full" value="{{ Waist.command }}"></td>
 	        </tr>
 
 	        <!-- 足 -->
@@ -711,17 +655,9 @@
 	            <td><input type="number" name="feet_vit" class="w-full" value="{{ Feet.vit }}"></td>
 	            <td><input type="number" name="feet_int" class="w-full" value="{{ Feet.int }}"></td>
 	            <td><input type="number" name="feet_mnd" class="w-full" value="{{ Feet.mnd }}"></td>
-	            <td><input type="number" name="feet_def" class="w-full" value="{{ Feet.dfn }}"></td>
-	            <td><input type="number" name="feet_evs" class="w-full" value="{{ Feet.evs }}"></td>
-	            <td><input type="number" name="feet_dmg" class="w-full" value="{{ Feet.dmg }}"></td>
-	            <td><input type="number" name="feet_acr" class="w-full" value="{{ Feet.acr }}"></td>
-	            <td><input type="number" name="feet_knowledge" class="w-full" value="{{ Feet.knowledge }}"></td>
-	            <td><input type="number" name="feet_quickness" class="w-full" value="{{ Feet.quickness }}"></td>
-	            <td><input type="number" name="feet_magic" class="w-full" value="{{ Feet.magic }}"></td>
 	            <td><input type="number" name="feet_HP" class="w-full" value="{{ Feet.HP }}"></td>
 	            <td><input type="number" name="feet_MP" class="w-full" value="{{ Feet.MP }}"></td>
-	            <td><input type="number" name="feet_VITREG" class="w-full" value="{{ Feet.VITREG }}"></td>
-	            <td><input type="number" name="feet_MNDREG" class="w-full" value="{{ Feet.MNDREG }}"></td>
+	            <td><input type="text" name="feet_command" class="w-full" value="{{ Feet.command }}"></td>
 	        </tr>
 
 	        <!-- その他 -->
@@ -735,17 +671,9 @@
 	            <td><input type="number" name="other_vit" class="w-full" value="{{ Other.vit }}"></td>
 	            <td><input type="number" name="other_int" class="w-full" value="{{ Other.int }}"></td>
 	            <td><input type="number" name="other_mnd" class="w-full" value="{{ Other.mnd }}"></td>
-	            <td><input type="number" name="other_def" class="w-full" value="{{ Other.dfn }}"></td>
-	            <td><input type="number" name="other_evs" class="w-full" value="{{ Other.evs }}"></td>
-	            <td><input type="number" name="other_dmg" class="w-full" value="{{ Other.dmg }}"></td>
-	            <td><input type="number" name="other_acr" class="w-full" value="{{ Other.acr }}"></td>
-	            <td><input type="number" name="other_knowledge" class="w-full" value="{{ Other.knowledge }}"></td>
-	            <td><input type="number" name="other_quickness" class="w-full" value="{{ Other.quickness }}"></td>
-	            <td><input type="number" name="other_magic" class="w-full" value="{{ Other.magic }}"></td>
 	            <td><input type="number" name="other_HP" class="w-full" value="{{ Other.HP }}"></td>
 	            <td><input type="number" name="other_MP" class="w-full" value="{{ Other.MP }}"></td>
-	            <td><input type="number" name="other_VITREG" class="w-full" value="{{ Other.VITREG }}"></td>
-	            <td><input type="number" name="other_MNDREG" class="w-full" value="{{ Other.MNDREG }}"></td>
+	            <td><input type="text" name="other_command" class="w-full" value="{{ Other.command }}"></td>
 	        </tr>
 	    </tbody>
 	</table>
@@ -754,9 +682,193 @@
 	</div>
 	</form>
 	
+	<div class="flex">
+	<!-- 弾薬 -->
+		<div class="ml-2 mr-2">
+			<h2 class="text-2xl font-semibold text-blue-400 mb-2 w-full">弾薬</h2>
+
+		    <!-- リスト -->
+		    <ul>
+		        {% for bullet in bullets %}
+		            <li class="bg-gray-800 p-4 rounded shadow-md w-full">
+		                <div class="items-center">
+		                	<div class="flex justify-between items-center">
+		                        <h3 class="text-xl font-bold mb-4">{{ bullet.name }}</h3>
+		                        <button onclick="showEditForm('b{{ bullet.id }}')" class="text-blue-500 hover:text-blue-700 ml-4 w-12">編集</button>
+		                    </div>
+		                    <div class="flex flex-wrap justify-start">
+		                    	<div class="flex mr-2">
+		                        	<p class="mr-2">id : </p>
+			                        <p class="text-gray-300">{{ bullet.id }}</p>
+			                    </div>
+			                    <div class="flex mr-2">
+			                        <p class="mr-2">個数 : </p>
+			                        <p class="text-gray-300">{{ bullet.個数 }}</p>
+			                    </div>
+			                    <div class="flex mr-2">
+			                        <p class="mr-2">補正ダメージ : </p>
+			                        <p class="text-gray-300">{{ bullet.補正ダメージ }}</p>
+			                    </div>
+			                    <div class="flex mr-2">
+			                        <p class="mr-2">補正命中 : </p>
+			                        <p class="text-gray-300">{{ bullet.補正命中 }}</p>
+			                    </div>
+			                    <div class="flex mr-2">
+			                        <p class="mr-2">消費MP : </p>
+			                        <p class="text-gray-300">{{ bullet.消費MP }}</p>
+			                    </div>
+		                    </div>
+		                    <p class="mr-4 text-gray-300">{{ bullet.explain }}</p>
+		                </div>
+		                <form id="edit-form-b{{ bullet.id }}" class="hidden" method="POST" action="{{ url_for('edit_bullet', character_id=character.id, bullet_id=bullet.id) }}">
+		                    <div class="space-y-2 mt-2">
+		                    	<div class="flex">
+		                    		<div class="mr-2">
+		                    			<label for="bullet_name-{{ bullet.id }}" class="block text-sm font-medium">名前:</label>
+		                    			<input type="text" id="bullet_name-{{ bullet.id }}" name="bullet_name-{{ bullet.id }}" value="{{ bullet.name }}" class="block sm:w-32 md:w-48 lg:w-64">
+		                        	</div>
+									<div class="mr-2">
+			                            <label for="個数-{{ bullet.id }}" class="block text-sm font-medium">個数:</label>
+			                            <input type="number" id="個数-{{ bullet.id }}" name="個数-{{ bullet.id }}" value="{{ bullet.個数 }}" class="block w-full">
+		                        	</div>
+		                        </div>
+		                        <div class="flex">
+		                        	<div class="mr-2">
+			                            <label for="補正ダメージ-{{ bullet.id }}" class="block text-sm font-medium">補正ダメージ:</label>
+			                            <input type="text" id="補正ダメージ-{{ bullet.id }}" name="補正ダメージ-{{ bullet.id }}" value="{{ bullet.補正ダメージ }}" class="block w-full">
+									</div>
+		                        	<div class="mr-2">
+			                            <label for="補正命中-{{ bullet.id }}" class="block text-sm font-medium">補正命中:</label>
+			                            <input type="number" id="補正命中-{{ bullet.id }}" name="補正命中-{{ bullet.id }}" value="{{ bullet.補正命中 }}" class="block w-full">
+		                        	</div>
+		                        	<div class="mr-2">
+			                            <label for="消費MP-{{ bullet.id }}" class="block text-sm font-medium">消費MP:</label>
+			                            <input type="number" id="消費MP-{{ bullet.id }}" name="消費MP-{{ bullet.id }}" value="{{ bullet.消費MP }}" class="block w-full">
+									</div>
+		                        </div>
+		                        <div class="mr-12 w-full">
+			                        <label for="bullet_command-{{ bullet.id }}" class="block text-sm font-medium">コマンド:</label>
+			                        <textarea id="bullet_command-{{ bullet.id }}" name="bullet_command-{{ bullet.id }}" class="block w-full" class="block w-full mr-8">{{ bullet.command }}</textarea>
+			                	</div>
+		                        <div class="mr-12 w-full">
+			                        <label for="bullet_explain-{{ bullet.id }}" class="block text-sm font-medium">備考:</label>
+			                        <textarea id="bullet_explain-{{ bullet.id }}" name="bullet_explain-{{ bullet.id }}" class="block w-full" class="block w-full mr-8">{{ bullet.explain }}</textarea>
+			                	</div>
+			                	<div class="flex justify-end">
+		                            <button type="submit" name="action" value="change" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">保存</button>
+		                        	<button type="submit" name="action" value="delete" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded ml-2">削除</button>
+			                    </div>
+		                    </div>
+		                </form>
+		            </li>
+		        {% endfor %}
+		    </ul>
+		    
+		    <div class="space-y-4 ml-2 mr-2">
+				<button onclick="showEditForm('newbullet')" class="text-green-500 hover:text-green-700 text-xl mt-2 ml-2">＋新規作成</button>
+			    
+			    <!-- 新規作成用 -->
+			    <form id="edit-form-newbullet" class="hidden" method="POST" action="{{ url_for('add_bullet', character_id=character.id) }}">
+			        <div class="space-y-2 mt-2 bg-gray-800 p-4 rounded shadow-md w-full 2xl:w-1/2">
+			        	<div class="flex">
+			        		<div class="mr-2">
+			        			<label for="bullet_name-new" class="block text-sm font-medium">名前:</label>
+			        			<input type="text" id="bullet_name-new" name="bullet_name-new" class="block sm:w-32 md:w-48 lg:w-64">
+			            	</div>
+			            	<div class="mr-2">
+			                    <label for="個数-new" class="block text-sm font-medium">個数:</label>
+			                    <input type="number" id="個数-new" name="個数-new" class="block w-full">
+			            	</div>
+			            </div>
+			            <div class="flex">
+			            	<div class="mr-2">
+			                    <label for="補正ダメージ-new" class="block text-sm font-medium">補正ダメージ:</label>
+			                    <input type="number" id="補正ダメージ-new" name="補正ダメージ-new" class="block w-full">
+							</div>
+			            	<div class="mr-2">
+			                    <label for="補正命中-new" class="block text-sm font-medium">補正命中:</label>
+			                    <input type="number" id="補正命中-new" name="補正命中-new" class="block w-full">
+			            	</div>
+			            	<div class="mr-2">
+			                    <label for="消費MP-new" class="block text-sm font-medium">消費MP:</label>
+			                    <input type="number" id="消費MP-new" name="消費MP-new" class="block w-full">
+							</div>
+						</div>
+			            <div class="mr-12 w-full">
+			                <label for="bullet_command-new" class="block text-sm font-medium">コマンド:</label>
+			                <textarea id="bullet_command-new" name="bullet_command-new" class="block w-full mr-8" row=2></textarea>
+			        	</div>
+			            <div class="mr-12 w-full">
+			                <label for="bullet_explain-new" class="block text-sm font-medium">備考:</label>
+			                <textarea id="bullet_explain-new" name="bullet_explain-new" class="block w-full mr-8" row=2></textarea>
+			        	</div>
+			        	<div class="flex justify-end">
+			                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">追加</button>
+			            </div>
+			        </div>
+			    </form>
+			</div>
+		</div>
+		<!-- 新規弾倉の作成 -->
+		<div class=" ml-2 mr-2">
+		    <h2 class="text-2xl font-semibold text-blue-400 mb-2 w-full">新規弾倉の作成</h2>
+		    <form method="POST" action="{{ url_for('create_bulletbox', character_id=character.id) }}" class="bg-gray-800 p-4 rounded shadow-md w-full mb-4">
+		        <div class="space-y-2">
+		            <div class="flex items-center mb-2">
+		                <label for="bulletbox_weapon_id" class="block text-sm font-medium mr-2">武器ID:</label>
+		                <input type="number" id="bulletbox_weapon_id" name="bulletbox_weapon_id" class="block sm:w-32 md:w-48 lg:w-64 bg-gray-700 text-white rounded" required>
+		            </div>
+		            <div class="flex items-center mb-2">
+		                <label for="new_maxbullet" class="block text-sm font-medium mr-2">最大弾数:</label>
+		                <input type="number" id="new_maxbullet" name="maxbullet" class="block sm:w-32 md:w-48 lg:w-64 bg-gray-700 text-white rounded" required>
+		            </div>
+		            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">作成</button>
+		        </div>
+		    </form>
+		</div>
+		<!-- 弾倉 -->
+		<div class=" ml-2 mr-2">
+			<h2 class="text-2xl font-semibold text-blue-400 mb-2 w-full">弾倉</h2>
+			<!-- リスト -->
+		    <ul>
+		        {% for bulletbox in bulletboxes %}
+		        {% if bulletbox is not none %}
+		        <li class="bg-gray-800 p-4 rounded shadow-md w-full mb-4">
+		            <div class="flex justify-between items-center">
+		                <h3 class="text-xl font-bold mb-4">{{ bulletbox.weapon_name }}</h3>
+		                <button onclick="showEditForm('bx{{ bulletbox.id }}')" class="text-blue-500 hover:text-blue-700 ml-4 w-12">編集</button>
+		            </div>
+		            {% for i in range(bulletbox.maxbullet) %}
+			        <div class="flex mr-2 mb-2">
+			            <p class="mr-2">{{ i + 1 }}:</p>
+			            {% set bullet_id = bulletbox.bullets[i] %}
+			            {% if bullet_id in mybullets %}
+			            {% set bullet = mybullets[bullet_id] %}
+			            <p class="text-gray-300">{{ bullet.name }}</p>
+			            {% endif %}
+			        </div>
+			        {% endfor %}
+			        <form id="edit-form-bx{{ bulletbox.id }}" class="hidden" method="POST" action="{{ url_for('edit_bulletbox', character_id=character.id, bulletbox_id=bulletbox.id) }}">
+			            <div class="space-y-2 mt-2">
+			                {% for i in range(bulletbox.maxbullet) %}
+			                <div class="flex items-center mb-2">
+			                    <label for="bullet_box-{{ bulletbox.id }}-{{ i + 1 }}" class="block text-sm font-medium mr-2">弾ID:</label>
+			                    <input type="number" id="bullet_box-{{ bulletbox.id }}-{{ i + 1 }}" name="bullet_box-{{ bulletbox.id }}-{{ i + 1 }}" value="{{ bulletbox.bullets[i] }}" class="block sm:w-32 md:w-48 lg:w-64 bg-gray-700 text-white rounded">
+			                </div>
+			                {% endfor %}
+		                    <button type="submit" name="action" value="change" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">保存</button>
+		                    <button type="submit" name="action" value="delete" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">削除</button>
+		                </div>
+		            </form>
+		        </li>
+		        {% endif %}
+		        {% endfor %}
+		    </ul>
+		</div>
+	</div>
 	<!-- メモ -->
 	<form id="memo" method="POST" action="{{ url_for('add_memo', character_id=character.id) }}">
-		<h2 class="text-2xl font-semibold text-blue-400 mb-2 w-full">その他メモ</h2>
+		<h2 class="text-2xl font-semibold text-blue-400 mb-2 w-full mt-2">その他メモ</h2>
 	    <textarea id="memo_content" name="memo_content" class="block w-full" class="block w-full mr-8">{{ Memo.content }}</textarea>
 	    <button type="submit" class="btn btn-warning bg-yellow-300 border-yellow-500 text-black-300 font-bold rounded mt-2">登録</button>
 	</form>

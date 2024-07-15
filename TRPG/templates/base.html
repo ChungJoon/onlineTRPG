@@ -66,8 +66,11 @@
         <li>
 	        <a href="{{ url_for('settings', character_id=character.id) }}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">設定</a>
 	    </li>
+	    <li>
+	        <a href="{{ url_for('commandlist', character_id=character.id) }}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">コマンド一覧</a>
+    	</li>
         <li>
-	        <a href="{{ url_for('user_command_list', character_id=character.id) }}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">コマンド設定</a>
+	        <a href="{{ url_for('user_command_list', character_id=character.id) }}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">ユーザーコマンド設定</a>
     	</li>
     	<li>
 	        <a href="{{ url_for('subcharacter', character_id=character.id) }}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">CPU/魔物一覧</a>

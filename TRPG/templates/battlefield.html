@@ -656,8 +656,8 @@
             .catch(error => console.error('Error sending message:', error));
         }
 
-        // 定期的にチャット欄を更新 (例えば、5秒ごと)
-        //setInterval(fetchChatMessages, 5000);
+        // 定期的にチャット欄を更新 (例えば、1秒ごと)
+        setInterval(fetchChatMessages, 1000);
 
         // 送信ボタンにクリックイベントを追加
         //sendMessageButton.addEventListener('click', sendMessage);

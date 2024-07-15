@@ -344,6 +344,11 @@ class Unit(db.Model):
     MND = db.Column(db.Integer, default=0, nullable=True)
     魔力ボーナス = db.Column(db.Integer, default=0, nullable=True)
     クリティカルボーナス = db.Column(db.Integer, default=0, nullable=True)
+    魔法クリティカル = db.Column(db.Integer, default=0, nullable=True)
+    先制ボーナス = db.Column(db.Integer, default=0, nullable=True)
+    知識ボーナス = db.Column(db.Integer, default=0, nullable=True)
+    回復ボーナス = db.Column(db.Integer, default=0, nullable=True)
+    魔法行使判定 = db.Column(db.Integer, default=0, nullable=True)
 
     def __repr__(self):
         return f"Unit(id={self.id}, name='{self.name}')"
@@ -367,67 +372,67 @@ class Unit(db.Model):
             self.基本ダメージ = 0
         else:
             # 命中力補正
-            EquipmentAccuracy = db.session.query(func.sum(Equipment.acr)).filter_by(related_id=self.related_id).scalar()
-            EquipmentAccuracy = coalesce(EquipmentAccuracy)
             ProtectorAccuracy = db.session.query(func.sum(Protector.命中)).filter_by(related_id=self.related_id).scalar()
             ProtectorAccuracy = coalesce(ProtectorAccuracy)
-            self.先制力 = physiclevel + self.DEX + EquipmentAccuracy + ProtectorAccuracy
+            self.先制力 = physiclevel + self.DEX + ProtectorAccuracy
         
             # 回避力補正
-            EquipmentEvasion = db.session.query(func.sum(Equipment.evs)).filter_by(related_id=self.related_id).scalar()
-            EquipmentEvasion = coalesce(EquipmentEvasion)
             ProtectorEvasion = db.session.query(func.sum(Protector.回避)).filter_by(related_id=self.related_id).scalar()
             ProtectorEvasion = coalesce(ProtectorEvasion)
-            self.回避 = physiclevel + self.AGI + EquipmentEvasion + ProtectorEvasion
+            self.回避 = physiclevel + self.AGI + ProtectorEvasion
 
              # ダメージ補正
-            EquipmentDamage = db.session.query(func.sum(Equipment.dmg)).filter_by(related_id=self.related_id).scalar()
-            EquipmentDamage = coalesce(EquipmentDamage)
-            self.基本ダメージ = physiclevel + self.STR + EquipmentDamage
+            self.基本ダメージ = physiclevel + self.STR
         
 
         # 防護点補正
-        EquipmentDefense = db.session.query(func.sum(Equipment.dfn)).filter_by(related_id=self.related_id).scalar()
-        EquipmentDefense = coalesce(EquipmentDefense)
         ProtectorDefense = db.session.query(func.sum(Protector.防護点)).filter_by(related_id=self.related_id).scalar()
         ProtectorDefense = coalesce(ProtectorDefense)
-        self.防御 = EquipmentDefense + ProtectorDefense
+        self.防御 = ProtectorDefense
 
         # 魔力補正
         if magiclevel is None:
             self.魔力 =0
         else:
-            EquipmentMagic = db.session.query(func.sum(Equipment.magic)).filter_by(related_id=self.related_id).scalar()
-            EquipmentMagic = coalesce(EquipmentMagic)
-            self.魔力ボーナス = self.INT + EquipmentMagic
-            self.魔力 = self.魔力 + int(magiclevel)
+            self.魔力ボーナス = self.INT
+            self.魔力 = self.魔力ボーナス + int(magiclevel)
         
 
          # 先制力補正
-        EquipmentQuick = db.session.query(func.sum(Equipment.quickness)).filter_by(related_id=self.related_id).scalar()
-        EquipmentQuick = coalesce(EquipmentQuick)
-        self.先制力 = myStatus.先制力 + EquipmentQuick
+        self.先制力 = myStatus.先制力 
 
          # 魔物知識補正
-        EquipmentKnowledge = db.session.query(func.sum(Equipment.knowledge)).filter_by(related_id=self.related_id).scalar()
-        EquipmentKnowledge = coalesce(EquipmentKnowledge)
-        self.魔物知識 = myStatus.魔物知識 + EquipmentKnowledge
-
+        self.魔物知識 = myStatus.魔物知識 
          # 精神抵抗補正
-        EquipmentMNDREG = db.session.query(func.sum(Equipment.MNDREG)).filter_by(related_id=self.related_id).scalar()
-        EquipmentMNDREG = coalesce(EquipmentMNDREG)
-        self.精神抵抗 = myStatus.MNDREG + EquipmentMNDREG
+        self.精神抵抗 = myStatus.MNDREG
 
          # 生命抵抗補正
-        EquipmentVITREG = db.session.query(func.sum(Equipment.VITREG)).filter_by(related_id=self.related_id).scalar()
-        EquipmentVITREG = coalesce(EquipmentVITREG)
-        self.生命抵抗 = myStatus.VITREG + EquipmentVITREG
+        self.生命抵抗 = myStatus.VITREG
 
         self.MaxHP = myStatus.HP
         self.MaxMP = myStatus.MP
 
         db.session.add(self)
         db.session.commit()
+
+        # 武器、防具、特技によるコマンド実行
+        from commands import execute_code
+        myweapons = Weapon.query.filter_by(related_id=self.related_id).all()
+        for weapon in myweapons:
+            if not weapon.command is None:
+                result = execute_code(weapon.command,self.name,[])
+        myprotectors = Protector.query.filter_by(related_id=self.related_id).all()
+        for protector in myprotectors:
+            if not protector.command is None:
+                result = execute_code(protector.command,self.name,[])
+        myskills = Skill.query.filter_by(related_id=self.related_id).all()
+        for skill in myskills:
+            if not skill.command is None:
+                result = execute_code(skill.command,self.name,[])
+        myequipments = Equipment.query.filter_by(related_id=self.related_id).all()
+        for equipment in myequipments:
+            if not equipment.command is None:
+                result = execute_code(equipment.command,self.name,[])
 
         return self
 
@@ -444,7 +449,7 @@ class SubCharacter(db.Model):
     Accuracy = db.Column(db.Integer, default=0)
     Evasion = db.Column(db.Integer, default=0)
     Defence = db.Column(db.Integer, default=0)
-    Require_Quickness = db.Column(db.Integer, default=0)
+    Quickness = db.Column(db.Integer, default=0)
     Knowledge = db.Column(db.Integer, default=0)
     Require_knowledge = db.Column(db.Integer, default=0)
     VID = db.Column(db.Integer, default=0)
@@ -470,7 +475,7 @@ class SubCharacterPart(db.Model):
     Accuracy = db.Column(db.Integer, default=0)
     Evasion = db.Column(db.Integer, default=0)
     Defence = db.Column(db.Integer, default=0)
-    Require_Quickness = db.Column(db.Integer, default=0)
+    Quickness = db.Column(db.Integer, default=0)
     Knowledge = db.Column(db.Integer, default=0)
     Require_knowledge = db.Column(db.Integer, default=0)
     VID = db.Column(db.Integer, default=0)
@@ -580,4 +585,41 @@ class Skill(db.Model):
 
     def __repr__(self):
         return f'<Skill {self.id}>'
+    
+class Bullet(db.Model):
+    __tablename__ = 'Bullet'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(45), nullable=True)
+    related_id = db.Column(db.Integer, nullable=True)
+    個数 = db.Column(db.Integer, nullable=True)
+    補正ダメージ = db.Column(db.Integer, nullable=True)
+    補正命中 = db.Column(db.Integer, nullable=True)
+    explain = db.Column(db.String(445), nullable=True)
+    command = db.Column(db.String(445), nullable=True)
+    消費MP = db.Column(db.Integer, nullable=True)
+
+    def __repr__(self):
+        return f'<Bullet {self.id}>'
+    
+class BulletBox(db.Model):
+    __tablename__ = 'BulletBox'
+    
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    weapon_name = db.Column(db.String(45), nullable=True)
+    related_id = db.Column(db.Integer, nullable=True)
+    maxbullet = db.Column(db.Integer, nullable=True)
+    col1 = db.Column(db.Integer, nullable=True)
+    col2 = db.Column(db.Integer, nullable=True)
+    col3 = db.Column(db.Integer, nullable=True)
+    col4 = db.Column(db.Integer, nullable=True)
+    col5 = db.Column(db.Integer, nullable=True)
+    col6 = db.Column(db.Integer, nullable=True)
+    col7 = db.Column(db.Integer, nullable=True)
+    col8 = db.Column(db.Integer, nullable=True)
+    col9 = db.Column(db.Integer, nullable=True)
+    col10 = db.Column(db.Integer, nullable=True)
+
+    def __repr__(self):
+        return f'<Bullet {self.id}>'
 
