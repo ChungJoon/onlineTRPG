@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}
+Command Execution
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 80%;">
+    <h2 class="text-4xl font-bold">コマンド作成ページ</h2>
+    
+    <!-- コマンドテストセクション -->
+    <div class="mt-10 p-4 bg-gray-800 rounded-lg border border-gray-700">
+    	<h3 class="text-2xl font-bold">コマンドテスト</h3>
+	    <form method="post" action="{{ url_for('command', character_id=character.id) }}" class="mt-4 space-y-4">
+	        <div class="mb-3">
+	            <label for="string-name" class="block text-lg mb-2">コマンドを入力してください</label>
+	            <input type="textarea" id="code_input" class="w-full bg-gray-700 text-white p-2 rounded" name="code_input" rows="10" placeholder="コマンド例: a=dice(2,6); ifmore($a,10)" style="width: 100%;">
+	        </div>
+	        <button type="submit" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">実行</button>
+	    </form>
+	    
+	    <hr>
+	    <br>
+	    <h3>結果:</h3>
+	    <div id="command-result" class="w-full" style="border: 1px solid #ccc;">
+	        <p>{{ result }}</p>
+	    </div>
+	    <br>
+	    <h3>出力ログ</h3>
+	    <div id="command-logs" class="w-full" style="height: 300px; overflow-y: scroll; border: 1px solid #ccc;">
+	        {% for log in command_logs %}
+	            <p>{{ log }}</p>
+	        {% endfor %}
+	    </div>
+	    
+	    <hr> 
+	    
+	    <!-- 文字列保存セクション -->
+	    <div class="mt-10 p-4 bg-gray-800 rounded-lg border border-gray-700">
+	        <h3 class="text-2xl font-bold">コマンドを保存</h3>
+	        <form id="save-string-form" method="POST" action="{{ url_for('save_string', character_id=character.id) }}" class="mt-4 space-y-4">
+	            <div>
+	                <label for="string-name" class="block text-lg mb-2">登録名</label>
+	                <input type="text" id="string-name" name="string_name" class="w-full bg-gray-700 text-white p-2 rounded" required>
+	            </div>
+	            <div>
+	                <label for="string-name" class="block text-lg mb-2">説明</label>
+	                <input type="text" id="string-explain" name="string_explain" class="w-full bg-gray-700 text-white p-2 rounded" required>
+	            </div>
+	            <div>
+	                <label for="string-content" class="block text-lg mb-2">コマンド記述</label>
+	                <textarea id="string-content" name="string_content" class="w-full bg-gray-700 text-white p-2 rounded" rows="4" required>{{command_input}}</textarea>
+	            </div>
+	            <button type="submit" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">保存する</button>
+	        </form>
+	    </div>
+	</div> 
+</div>
+{% endblock %}
+profile

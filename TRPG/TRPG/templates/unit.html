@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+
+{% block title %}
+Command Execution
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-silver-400 mb-4">ユニット一覧</h1>
+	
+    <!-- Unitの一覧表示 -->
+    <h2 class="text-2xl font-semibold text-green-400 mb-2">プレイヤー</h2>
+    <ul class="flex flex-wrap -mx-2">
+        {% for unit in palyer_units %}
+            <li class="bg-gray-800 p-4 rounded shadow-md w-full xl:w-1/2 2xl:w-1/3 p-2">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold">{{ unit.label }}</h3>
+                        <p class="text-green-300">HP : {{ unit.HP }}/{{ unit.MaxHP }}  MP :{{ unit.MP }}/{{ unit.MaxMP }} </p>
+                        <p class="text-sm text-gray-400">{{ unit.detail }}</p>
+                    </div>
+                    <button onclick="showEditForm({{ unit.id }})" class="text-blue-500 hover:text-blue-700 ml-4 w-12">編集</button>
+                </div>
+                <form id="edit-form-{{ unit.id }}" class="hidden" method="POST" action="{{ url_for('edit_unit', character_id=character.id, unit_id=unit.id) }}">
+                    <div class="space-y-2 mt-2">
+                    	<input type="hidden" id="name-{{ unit.id }}" name="name-{{ unit.id }}" value="{{ unit.label }}" class="block">
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="HP-{{ unit.id }}" class="block text-sm font-medium text-gray-200">HP:</label>
+	                            <input type="number" id="HP-{{ unit.id }}" name="HP-{{ unit.id }}" value="{{ unit.HP }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="MP-{{ unit.id }}" class="block text-sm font-medium text-gray-200">MP:</label>
+	                            <input type="number" id="MP-{{ unit.id }}" name="MP-{{ unit.id }}" value="{{ unit.MP }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2 mr-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="MaxHP-{{ unit.id }}" class="block text-sm font-medium text-gray-200">MaxHP:</label>
+	                            <input type="number" id="MaxHP-{{ unit.id }}" name="MaxHP-{{ unit.id }}" value="{{ unit.MaxHP }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+                        	<div class="mr-2">
+	                            <label for="MaxMP-{{ unit.id }}" class="block text-sm font-medium text-gray-200">MaxMP:</label>
+	                            <input type="number" id="MaxMP-{{ unit.id }}" name="MaxMP-{{ unit.id }}" value="{{ unit.MaxMP }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2 mr-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="accuracy-{{ unit.id }}" class="block text-sm font-medium text-gray-200">命中:</label>
+	                            <input type="number" id="accuracy-{{ unit.id }}" name="accuracy-{{ unit.id }}" value="{{ unit.命中 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="evasion-{{ unit.id }}" class="block text-sm font-medium text-gray-200">回避:</label>
+	                            <input type="number" id="evasion-{{ unit.id }}" name="evasion-{{ unit.id }}" value="{{ unit.回避}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="damage-{{ unit.id }}" class="block text-sm font-medium text-gray-200">基本ダメージ:</label>
+	                            <input type="number" id="damage-{{ unit.id }}" name="damage-{{ unit.id }}" value="{{ unit.基本ダメージ}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="defence-{{ unit.id }}" class="block text-sm font-medium text-gray-200">防護点:</label>
+	                            <input type="number" id="defence-{{ unit.id }}" name="defence-{{ unit.id }}" value="{{ unit.防護点}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="magic-{{ unit.id }}" class="block text-sm font-medium text-gray-200">魔力:</label>
+	                            <input type="number" id="magic-{{ unit.id }}" name="magic-{{ unit.id }}" value="{{ unit.魔力 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+                        	<div class="mr-2">
+	                            <label for="VID-{{ unit.id }}" class="block text-sm font-medium text-gray-200">生命抵抗:</label>
+	                            <input type="number" id="VID-{{ unit.id }}" name="VID-{{ unit.id }}" value="{{ unit.生命抵抗 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="MND-{{ unit.id }}" class="block text-sm font-medium text-gray-200">精神抵抗:</label>
+	                            <input type="number" id="MND-{{ unit.id }}" name="MND-{{ unit.id }}" value="{{ unit.精神抵抗}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="knowledge-{{ unit.id }}" class="block text-sm font-medium text-gray-200">魔物知識:</label>
+	                            <input type="number" id="knowledge-{{ unit.id }}" name="knowledge-{{ unit.id }}" value="{{ unit.魔物知識 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="quickness-{{ unit.id }}" class="block text-sm font-medium text-gray-200">先制力:</label>
+	                            <input type="number" id="quickness-{{ unit.id }}" name="quickness-{{ unit.id }}" value="{{ unit.先制力}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="mpcut-{{ unit.id }}" class="block text-sm font-medium text-gray-200">MP軽減:</label>
+	                            <input type="number" id="mpcut-{{ unit.id }}" name="mpcut-{{ unit.id }}" value="{{ unit.MP軽減}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="DEX-{{ unit.id }}" class="block text-sm font-medium text-gray-200">DEX:</label>
+	                            <input type="number" id="DEX-{{ unit.id }}" name="DEX-{{ unit.id }}" value="{{ unit.DEX }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="STR-{{ unit.id }}" class="block text-sm font-medium text-gray-200">STR:</label>
+	                            <input type="number" id="STR-{{ unit.id }}" name="STR-{{ unit.id }}" value="{{ unit.STR}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="AGI-{{ unit.id }}" class="block text-sm font-medium text-gray-200">AGI:</label>
+	                            <input type="number" id="AGI-{{ unit.id }}" name="AGI-{{ unit.id }}" value="{{ unit.AGI}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="VIT-{{ unit.id }}" class="block text-sm font-medium text-gray-200">VIT:</label>
+	                            <input type="number" id="VIT-{{ unit.id }}" name="VIT-{{ unit.id }}" value="{{ unit.VIT }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="INT-{{ unit.id }}" class="block text-sm font-medium text-gray-200">INT:</label>
+	                            <input type="number" id="INT-{{ unit.id }}" name="INT-{{ unit.id }}" value="{{ unit.INT}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="MND-{{ unit.id }}" class="block text-sm font-medium text-gray-200">MND:</label>
+	                            <input type="number" id="MND-{{ unit.id }}" name="MND-{{ unit.id }}" value="{{ unit.MND}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="magicbonus-{{ unit.id }}" class="block text-sm font-medium text-gray-200">魔力ボーナス:</label>
+	                            <input type="number" id="magicbonus-{{ unit.id }}" name="magicbonus-{{ unit.id }}" value="{{ unit.魔力ボーナス }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="criticalbonus-{{ unit.id }}" class="block text-sm font-medium text-gray-200">クリティカルボーナス:</label>
+	                            <input type="number" id="criticalbonus-{{ unit.id }}" name="criticalbonus-{{ unit.id }}" value="{{ unit.クリティカルボーナス}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="magiccritical-{{ unit.id }}" class="block text-sm font-medium text-gray-200">魔法クリティカル:</label>
+	                            <input type="number" id="magiccritical-{{ unit.id }}" name="magiccritical-{{ unit.id }}" value="{{ unit.魔法クリティカル}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="quickbonus-{{ unit.id }}" class="block text-sm font-medium text-gray-200">先制ボーナス:</label>
+	                            <input type="number" id="quickbonus-{{ unit.id }}" name="quickbonus-{{ unit.id }}" value="{{ unit.先制ボーナス }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="knowbonus-{{ unit.id }}" class="block text-sm font-medium text-gray-200">知識ボーナス:</label>
+	                            <input type="number" id="knowbonus-{{ unit.id }}" name="knowbonus-{{ unit.id }}" value="{{ unit.知識ボーナス}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="healbonus-{{ unit.id }}" class="block text-sm font-medium text-gray-200">回復ボーナス:</label>
+	                            <input type="number" id="healbonus-{{ unit.id }}" name="healbonus-{{ unit.id }}" value="{{ unit.回復ボーナス}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="magicchallengebonus-{{ unit.id }}" class="block text-sm font-medium text-gray-200">魔法行使判定:</label>
+	                            <input type="number" id="magicchallengebonus-{{ unit.id }}" name="magicchallengebonus-{{ unit.id }}" value="{{ unit.魔法行使判定}}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="mr-2">
+                            <label for="detail-{{ unit.id }}" class="block text-sm font-medium text-gray-200">詳細:</label>
+                            <input type="text" id="detail-{{ unit.id }}" name="detail-{{ unit.id }}" value="{{ unit.詳細 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        </div>
+                        <div>
+                            <button type="submit" name="action" value="save" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">保存</button>
+                        	<button type="submit" name="action" value="reset" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded ml-2">初期化</button>
+                        </div>
+                    </div>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- CPUの一覧表示 -->
+    <h2 class="text-2xl font-semibold text-blue-400 mt-6 mb-2">CPU</h2>
+    <ul class="flex flex-wrap -mx-2">
+        {% for unit in cpu_units %}
+            <li class="bg-gray-800 p-4 rounded shadow-md w-full xl:w-1/2 2xl:w-1/3 p-2">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold">{{ unit.name }}</h3>
+                        <p class="text-green-300">HP : {{ unit.HP }}/{{ unit.MaxHP }}  MP :{{ unit.MP }}/{{ unit.MaxMP }} </p>
+                        <p class="text-sm text-gray-400">{{ unit.detail }}</p>
+                    </div>
+                    <button onclick="showEditForm({{ unit.id }})" class="text-blue-500 hover:text-blue-700 w-12">編集</button>
+                </div>
+                <form id="edit-form-{{ unit.id }}" class="hidden" method="POST" action="{{ url_for('edit_unit', character_id=character.id, unit_id=unit.id) }}">
+                    <div class="space-y-2 mt-2">
+                        <div>
+                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">名前:</label>
+                            <input type="text" id="name-{{ unit.id }}" name="name-{{ unit.id }}" value="{{ unit.name }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">HP:</label>
+	                            <input type="number" id="HP-{{ unit.id }}" name="HP-{{ unit.id }}" value="{{ unit.HP }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">MP:</label>
+	                            <input type="number" id="MP-{{ unit.id }}" name="MP-{{ unit.id }}" value="{{ unit.MP }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">命中:</label>
+	                            <input type="number" id="accuracy-{{ unit.id }}" name="accuracy-{{ unit.id }}" value="{{ unit.命中 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">回避:</label>
+	                            <input type="number" id="evasion-{{ unit.id }}" name="evasion-{{ unit.id }}" value="{{ unit.回避 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">防護点:</label>
+	                            <input type="number" id="defence-{{ unit.id }}" name="defence-{{ unit.id }}" value="{{ unit.防護点 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">基本ダメージ:</label>
+	                            <input type="number" id="damage-{{ unit.id }}" name="damage-{{ unit.id }}" value="{{ unit.基本ダメージ }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">魔力:</label>
+	                            <input type="number" id="magic-{{ unit.id }}" name="magic-{{ unit.id }}" value="{{ unit.魔力 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">弱点:</label>
+	                            <input type="number" id="weakpoint-{{ unit.id }}" name="weakpoint-{{ unit.id }}" value="{{ unit.弱点 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">生命抵抗:</label>
+	                            <input type="number" id="VID-{{ unit.id }}" name="VID-{{ unit.id }}" value="{{ unit.生命抵抗 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">精神抵抗:</label>
+	                            <input type="number" id="MND-{{ unit.id }}" name="MND-{{ unit.id }}" value="{{ unit.精神抵抗 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">魔物知識:</label>
+	                            <input type="number" id="knowledge-{{ unit.id }}" name="knowledge-{{ unit.id }}" value="{{ unit.魔物知識 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">先制力:</label>
+	                            <input type="number" id="quickness-{{ unit.id }}" name="quickness-{{ unit.id }}" value="{{ unit.先制力 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">魔物知識要求値:</label>
+	                            <input type="number" id="Require_knowledge-{{ unit.id }}" name="Require_knowledge-{{ unit.id }}" value="{{ unit.魔物知識要求値 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div>
+                            <label for="detail-{{ unit.id }}" class="block text-sm font-medium text-gray-200">説明:</label>
+                            <input type="text" id="detail-{{ unit.id }}" name="detail-{{ unit.id }}" value="{{ unit.detail }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        </div>
+                        <div>
+                            <button type="submit" name="action" value="set" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">保存</button>
+                            <button type="submit" name="action" value="delete" class="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">削除</button>
+                        </div>
+                    </div>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+    
+    <!-- 魔物の一覧表示 -->
+    <h2 class="text-2xl font-semibold text-red-400 mt-6 mb-2">魔物</h2>
+    <ul class="flex flex-wrap -mx-2">
+        {% for unit in monster_units %}
+            <li class="bg-gray-800 p-4 rounded shadow-md w-full xl:w-1/2 2xl:w-1/3 p-2">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold">{{ unit.name }}</h3>
+                        <p class="text-green-300">HP : {{ unit.HP }}/{{ unit.MaxHP }}  MP :{{ unit.MP }}/{{ unit.MaxMP }} </p>
+                        <p class="text-sm text-gray-400">{{ unit.detail }}</p>
+                    </div>
+                    <button onclick="showEditForm({{ unit.id }})" class="text-blue-500 hover:text-blue-700 w-12">編集</button>
+                </div>
+                <form id="edit-form-{{ unit.id }}" class="hidden" method="POST" action="{{ url_for('edit_unit', character_id=character.id, unit_id=unit.id) }}">
+                    <div class="space-y-2 mt-2">
+                        <div>
+                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">名前:</label>
+                            <input type="text" id="name-{{ unit.id }}" name="name-{{ unit.id }}" value="{{ unit.name }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">HP:</label>
+	                            <input type="number" id="HP-{{ unit.id }}" name="HP-{{ unit.id }}" value="{{ unit.HP }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">MP:</label>
+	                            <input type="number" id="MP-{{ unit.id }}" name="MP-{{ unit.id }}" value="{{ unit.MP }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">命中:</label>
+	                            <input type="number" id="accuracy-{{ unit.id }}" name="accuracy-{{ unit.id }}" value="{{ unit.命中 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">回避:</label>
+	                            <input type="number" id="evasion-{{ unit.id }}" name="evasion-{{ unit.id }}" value="{{ unit.回避 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">防護点:</label>
+	                            <input type="number" id="defence-{{ unit.id }}" name="defence-{{ unit.id }}" value="{{ unit.防護点 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">基本ダメージ:</label>
+	                            <input type="number" id="damage-{{ unit.id }}" name="damage-{{ unit.id }}" value="{{ unit.基本ダメージ }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">魔力:</label>
+	                            <input type="number" id="magic-{{ unit.id }}" name="magic-{{ unit.id }}" value="{{ unit.魔力 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">弱点:</label>
+	                            <input type="number" id="weakpoint-{{ unit.id }}" name="weakpoint-{{ unit.id }}" value="{{ unit.弱点 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">生命抵抗:</label>
+	                            <input type="number" id="VID-{{ unit.id }}" name="VID-{{ unit.id }}" value="{{ unit.生命抵抗 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">精神抵抗:</label>
+	                            <input type="number" id="MND-{{ unit.id }}" name="MND-{{ unit.id }}" value="{{ unit.精神抵抗 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div class="flex">
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">魔物知識:</label>
+	                            <input type="number" id="knowledge-{{ unit.id }}" name="knowledge-{{ unit.id }}" value="{{ unit.魔物知識 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+							</div>
+							<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">先制力:</label>
+	                            <input type="number" id="quickness-{{ unit.id }}" name="quickness-{{ unit.id }}" value="{{ unit.先制力 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        	<div class="mr-2">
+	                            <label for="name-{{ unit.id }}" class="block text-sm font-medium text-gray-200">魔物知識要求値:</label>
+	                            <input type="number" id="Require_knowledge-{{ unit.id }}" name="Require_knowledge-{{ unit.id }}" value="{{ unit.魔物知識要求値 }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        	</div>
+                        </div>
+                        <div>
+                            <label for="detail-{{ unit.id }}" class="block text-sm font-medium text-gray-200">説明:</label>
+                            <input type="text" id="detail-{{ unit.id }}" name="detail-{{ unit.id }}" value="{{ unit.detail }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        </div>
+                        <div>
+                            <button type="submit" name="action" value="set" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">保存</button>
+                            <button type="submit" name="action" value="delete" class="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">削除</button>
+                        </div>
+                    </div>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
+{% block script %}
+<!-- JavaScript for showing/hiding the edit forms -->
+    <script>
+        function showEditForm(commandId) {
+            var form = document.getElementById('edit-form-' + commandId);
+            if (form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+            } else {
+                form.classList.add('hidden');
+            }
+        }
+    </script>
+{% endblock %}

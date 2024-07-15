@@ -1,0 +1,282 @@
+<!-- home.html -->
+{% extends "base.html" %}
+{% block title %}{{ character.name }}専用ページ{% endblock %}
+{% block style %}
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+    .container {
+        @apply mt-5 bg-white dark:bg-gray-900 p-6 rounded-lg shadow-lg;
+    }
+    .character-image {
+        @apply w-full max-w-xs mx-auto rounded-lg shadow-lg;
+    }
+    .form-group label {
+        @apply font-bold text-gray-700 dark:text-gray-300;
+    }
+    .form-group {
+        @apply mb-4;
+    }
+    .form-row .col-md-4 {
+        @apply px-2;
+    }
+    table {
+        @apply w-full mt-5 border-collapse;
+    }
+    th, td {
+        @apply border border-gray-300 dark:border-gray-700 p-2 text-left;
+    }
+    th {
+        @apply bg-blue-200 dark:bg-gray-700;
+    }
+    .btn {
+        @apply mt-2;
+    }
+    .custom-input-width {
+        @apply max-w-xs mr-12 h-10;
+    }
+    .custom-btn {
+        @apply h-10;
+    }
+    .button-wrapper {
+        @apply flex justify-end w-full;
+    }
+    .form-group-add {
+        @apply flex items-center gap-2.5;
+    }
+    .custom-btn-skill {
+        @apply ml-1 mr-0.5;
+    }
+    .custom-input-width-skill {
+        @apply w-16;
+    }
+    td .form-check {
+        @apply flex items-center justify-center h-full;
+    }
+    .form-check-input {
+        @apply w-6 h-6 m-0 ml-1 mt-0; /* マージンを調整 */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-2xl font-bold mb-4">{{ character.lavel }}装備一覧</h1>
+    <hr class="mb-4">
+
+    <!-- 武器セクション -->
+    <h3 class="text-xl font-semibold mb-2">武器 (変更可能)</h3>
+    <button type="button" class="btn btn-primary bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addWeapon()">行追加</button>
+    <table class="mt-4 border border-gray-300 dark:border-gray-700">
+        <thead>
+            <tr>
+                <th style="width: 5%;">装備</th>
+                <th style="width: 14%;">名前</th>
+                <th style="width: 9%;">武器種</th>
+                <th style="width: 8%;">タイプ</th>
+                <th style="width: 7%;">ランク</th>
+                <th style="width: 8%;">重量</th>
+                <th style="width: 7%;">命中</th>
+                <th style="width: 8%;">威力</th>
+                <th style="width: 8%;">追加点</th>
+                <th style="width: 8%;">C値</th>
+                <th style="width: 10%;">備考</th>
+                <th style="width: 8%;">操作</th>
+            </tr>
+        </thead>
+        <tbody id="items-tbody-weapon">
+            {% for weapon in weapons %}
+            <tr>
+                <td>
+                    <input type="checkbox" name="weapon_{{ weapon.id }}_actual" class="form-check-input" {% if weapon.actual %}checked{% endif %}>
+                </td>
+                <td>
+                    <input type="text" name="weapon_{{ weapon.id }}_name" value="{{ weapon.name }}" class="form-control">
+                </td>
+                <td>
+                    <select name="weapon_{{ weapon.id }}_category" class="form-control">
+                        {% for category in weapon_categories %}
+                        <option value="{{ category }}" {% if weapon.category == category %}selected{% endif %}>{{ category }}</option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <input type="text" name="weapon_{{ weapon.id }}_type" value="{{ weapon.type }}" class="form-control">
+                </td>
+                <td>
+                    <input type="text" name="weapon_{{ weapon.id }}_rank" value="{{ weapon.rank }}" class="form-control">
+                </td>
+                <td>
+                    <input type="number" name="weapon_{{ weapon.id }}_weight" value="{{ weapon.weight }}" class="form-control">
+                </td>
+                <td>
+                    <input type="number" name="weapon_{{ weapon.id }}_aim" value="{{ weapon.aim }}" class="form-control">
+                </td>
+                <td>
+                    <input type="number" name="weapon_{{ weapon.id }}_power" value="{{ weapon.power }}" class="form-control">
+                </td>
+                <td>
+                    <input type="number" name="weapon_{{ weapon.id }}_damage" value="{{ weapon.damage }}" class="form-control">
+                </td>
+                <td>
+                    <input type="number" name="weapon_{{ weapon.id }}_critical" value="{{ weapon.critical }}" class="form-control">
+                </td>
+                <td>
+                    <input type="text" name="weapon_{{ weapon.id }}_explain" value="{{ weapon.explain }}" class="form-control">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-success bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onclick="submitRow(this, '{{ url_for('edit_weapon', character_id=character.id, weapon_id=weapon.id) }}')">登録</button>
+                    <button type="button" class="btn btn-danger bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="submitRow(this, '{{ url_for('delete_weapon', character_id=character.id, weapon_id=weapon.id) }}')">削除</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br>
+
+    <!-- 防具セクション -->
+    <h3 class="text-xl font-semibold mb-2">防具 (変更可能)</h3>
+    <button type="button" class="btn btn-primary bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded" onclick="addProtector()">行追加</button>
+    <table class="mt-4 border border-gray-300 dark:border-gray-700">
+        <thead>
+            <tr>
+                <th style="width: 20%;">名前</th>
+                <th style="width: 12%;">種類</th>
+                <th style="width: 8%;">防護点</th>
+                <th style="width: 8%;">重量</th>
+                <th style="width: 8%;">回避力</th>
+                <th style="width: 8%;">命中力</th>
+                <th style="width: 20%;">説明</th>
+                <th style="width: 16%;">操作</th>
+            </tr>
+        </thead>
+        <tbody id="items-tbody-protector">
+            {% for protector in protectors %}
+            <tr>
+                <td>
+                    <input type="text" name="protector_{{ protector.id }}_name" value="{{ protector.name }}" class="form-control">
+                </td>
+                <td>
+                    <input type="text" name="protector_{{ protector.id }}_type" value="{{ protector.type }}" class="form-control">
+                </td>
+                <td>
+                    <input type="number" name="protector_{{ protector.id }}_defense" value="{{ protector.defense }}" class="form-control">
+                </td>
+                <td>
+                    <input type="number" name="protector_{{ protector.id }}_weight" value="{{ protector.weight }}" class="form-control">
+                </td>
+                <td>
+                    <input type="number" name="protector_{{ protector.id }}_evasion" value="{{ protector.evasion }}" class="form-control">
+                </td>
+                <td>
+                    <input type="number" name="protector_{{ protector.id }}_aim" value="{{ protector.aim }}" class="form-control">
+                </td>
+                <td>
+                    <input type="text" name="protector_{{ protector.id }}_explain" value="{{ protector.explain }}" class="form-control">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-success bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onclick="submitRow(this, '{{ url_for('edit_protector', character_id=character.id, protector_id=protector.id) }}')">登録</button>
+                    <button type="button" class="btn btn-danger bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="submitRow(this, '{{ url_for('delete_protector', character_id=character.id, protector_id=protector.id) }}')">削除</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <br>
+
+    <!-- スキルセクション -->
+    <h3 class="text-xl font-semibold mb-2">スキル</h3>
+    <table class="mt-4 border border-gray-300 dark:border-gray-700">
+        <thead>
+            <tr>
+                <th style="width: 30%;">名前</th>
+                <th style="width: 50%;">説明</th>
+                <th style="width: 20%;">操作</th>
+            </tr>
+        </thead>
+        <tbody id="skills-tbody">
+            {% for skill in skills %}
+            <tr>
+                <td>
+                    <input type="text" name="skill_{{ skill.id }}_name" value="{{ skill.name }}" class="form-control">
+                </td>
+                <td>
+                    <input type="text" name="skill_{{ skill.id }}_explain" value="{{ skill.explain }}" class="form-control">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-danger bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="submitRow(this, '{{ url_for('delete_skill', character_id=character.id, skill_id=skill.id) }}')">削除</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="mt-4">
+        <form class="form-group-add">
+            <input type="text" id="new_skill_name" class="form-control custom-input-width-skill" placeholder="スキル名">
+            <input type="text" id="new_skill_explain" class="form-control custom-input-width-skill" placeholder="説明">
+            <button type="button" class="btn btn-primary bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded custom-btn-skill" onclick="addSkill()">追加</button>
+        </form>
+    </div>
+
+    <br>
+
+    <!-- 所持品セクション -->
+    <h3 class="text-xl font-semibold mb-2">所持品</h3>
+    <table class="mt-4 border border-gray-300 dark:border-gray-700">
+        <thead>
+            <tr>
+                <th style="width: 30%;">名前</th>
+                <th style="width: 50%;">説明</th>
+                <th style="width: 20%;">操作</th>
+            </tr>
+        </thead>
+        <tbody id="items-tbody-item">
+            {% for item in items %}
+            <tr>
+                <td>
+                    <input type="text" name="item_{{ item.id }}_name" value="{{ item.name }}" class="form-control">
+                </td>
+                <td>
+                    <input type="text" name="item_{{ item.id }}_explain" value="{{ item.explain }}" class="form-control">
+                </td>
+                <td>
+                    <button type="button" class="btn btn-success bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded" onclick="submitRow(this, '{{ url_for('edit_item', character_id=character.id, item_id=item.id) }}')">登録</button>
+                    <button type="button" class="btn btn-danger bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded" onclick="submitRow(this, '{{ url_for('delete_item', character_id=character.id, item_id=item.id) }}')">削除</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <div class="mt-4">
+        <form class="form-group-add">
+            <input type="text" id="new_item_name" class="form-control custom-input-width-skill" placeholder="所持品名">
+            <input type="text" id="new_item_explain" class="form-control custom-input-width-skill" placeholder="説明">
+            <button type="button" class="btn btn-primary bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded custom-btn-skill" onclick="addItem()">追加</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // 行追加ボタンの動作を定義
+    function addWeapon() {
+        // weapons-tableに新しい行を追加するためのコードをここに書く
+    }
+
+    function addProtector() {
+        // protectors-tableに新しい行を追加するためのコードをここに書く
+    }
+
+    function addSkill() {
+        // スキルを追加するためのコードをここに書く
+    }
+
+    function addItem() {
+        // アイテムを追加するためのコードをここに書く
+    }
+
+    function submitRow(button, url) {
+        // 各行のデータを送信するためのコードをここに書く
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}
+Command Execution
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold text-silver-400 mb-4">登録コマンド一覧</h1>
+		
+	<a href="{{ url_for('command', character_id=character.id) }}" class="text-2xl items-center p-2 text-green-500 hover:text-green-700">＋コマンドの新規作成</a>
+	
+	<br><br>
+	
+    <!-- UserCommandの一覧表示 -->
+    <h2 class="text-2xl font-semibold text-blue-400 mb-2">ユーザーコマンド</h2>
+    <ul class="space-y-2">
+        {% for command in user_commands %}
+            <li class="bg-gray-800 p-4 rounded shadow-md xl:w-full 2xl:w-2/3 p-2">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold">{{ command.name }}</h3>
+                        <p>{{ command.command }}</p>
+                        <p class="text-sm text-gray-400">{{ command.explain }}</p>
+                    </div>
+                    <button onclick="showEditForm({{ command.id }})" class="text-blue-500 hover:text-blue-700">編集</button>
+                </div>
+                <form id="edit-form-{{ command.id }}" class="hidden" method="POST" action="{{ url_for('edit_command', character_id=character.id, command_id=command.id) }}">
+                    <div class="space-y-2 mt-2">
+                        <div>
+                            <label for="name-{{ command.id }}" class="block text-sm font-medium text-gray-200">名前</label>
+                            <input type="text" id="name-{{ command.id }}" name="name" value="{{ command.name }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        </div>
+                        <div>
+                            <label for="command-{{ command.id }}" class="block text-sm font-medium text-gray-200">コマンド</label>
+                            <textarea id="command-{{ command.id }}" name="command" rows="3" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">{{ command.command }}</textarea>
+                        </div>
+                        <div>
+                            <label for="explain-{{ command.id }}" class="block text-sm font-medium text-gray-200">説明</label>
+                            <input type="text" id="explain-{{ command.id }}" name="explain" value="{{ command.explain }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        </div>
+                        <div>
+                            <button type="submit" name="action" value="save" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">保存</button>
+                            <button type="submit" name="action" value="delete" class="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">削除</button>
+                            <button type="submit" name="action" value="public" class="ml-4 bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">公開</button>
+                        </div>
+                    </div>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- PublicCommandの一覧表示 -->
+    <h2 class="text-2xl font-semibold text-red-400 mt-6 mb-2">パブリックコマンド</h2>
+    <ul class="space-y-2">
+        {% for command in public_commands %}
+            <li class="bg-gray-800 p-4 rounded shadow-md xl:w-full 2xl:w-2/3 p-2">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h3 class="text-xl font-bold">{{ command.name }}</h3>
+                        <p>{{ command.command }}</p>
+                        <p class="text-sm text-gray-400">{{ command.explain }}</p>
+                    </div>
+                    <button onclick="showEditForm({{ command.id }})" class="text-blue-500 hover:text-blue-700">編集</button>
+                </div>
+                <form id="edit-form-{{ command.id }}" class="hidden" method="POST" action="{{ url_for('edit_command', character_id=character.id, command_id=command.id) }}">
+                    <div class="space-y-2 mt-2">
+                        <div>
+                            <label for="name-{{ command.id }}" class="block text-sm font-medium text-gray-200">名前</label>
+                            <input type="text" id="name-{{ command.id }}" name="name" value="{{ command.name }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        </div>
+                        <div>
+                            <label for="command-{{ command.id }}" class="block text-sm font-medium text-gray-200">コマンド</label>
+                            <textarea id="command-{{ command.id }}" name="command" rows="3" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">{{ command.command }}</textarea>
+                        </div>
+                        <div>
+                            <label for="explain-{{ command.id }}" class="block text-sm font-medium text-gray-200">説明</label>
+                            <input type="text" id="explain-{{ command.id }}" name="explain" value="{{ command.explain }}" class="block w-full bg-gray-700 text-gray-200 rounded border border-gray-600 p-2">
+                        </div>
+                        <div>
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">保存</button>
+                            <button type="submit" name="action" value="delete" class="ml-4 bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">削除</button>
+                        </div>
+                    </div>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}
+{% block script %}
+<!-- JavaScript for showing/hiding the edit forms -->
+    <script>
+        function showEditForm(commandId) {
+            var form = document.getElementById('edit-form-' + commandId);
+            if (form.classList.contains('hidden')) {
+                form.classList.remove('hidden');
+            } else {
+                form.classList.add('hidden');
+            }
+        }
+    </script>
+{% endblock %}

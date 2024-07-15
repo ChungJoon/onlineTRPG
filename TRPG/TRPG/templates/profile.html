@@ -1,0 +1,595 @@
+<!-- home.html -->
+{% extends "base.html" %}
+{% block title %}{{ character.name }}専用ページ{% endblock %}
+{% block style %}    
+{% endblock %}
+
+{% block content %}
+<div class="container">
+	<h1 class="text-4xl font-bold mb-6">{{ character.label }}専用ページ</h1>
+	<hr>
+	
+	<h2 class="text-2xl font-semibold mb-4">キャラクター名: {{ character.label }}</h2>
+	<img src="{{ character.image_url }}" alt="{{ character.name }}" class="character-image mb-3">
+	
+	<br>
+	
+	<form method="POST" action="{{ url_for('profile', character_id=character.id ) }}" class="ml-2">
+	<div class="xl:flex lg:w-full">
+		<!-- 左側: キャラクター情報 -->
+		<div class="font-medium w-full mr-8">
+			<h3 class="text-2xl font-semibold mb-4 text-blue-400">キャラクター情報 (変更可能)</h3>
+			
+			<!-- 名前, タイプ, 年齢, 背景 -->
+			<div class="form-row">
+			    <div class="form-group col-md-3">
+			        <label for="name">性別:</label>
+			        <input type="text" id="sex" name="sex" value="{{ character.sex }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-3">
+			        <label for="type">種族:</label>
+			        <input type="text" id="type" name="type" value="{{ character.type }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-3">
+			        <label for="age">年齢:</label>
+			        <input type="number" id="age" name="age" value="{{ character.age }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-3">
+			        <label for="background">生まれ:</label>
+			        <input type="text" id="backborn" name="backborn" value="{{ character.backborn }}" class="w-full">
+			    </div>
+			</div>
+
+			<!-- 技術, 身体, 心 -->
+			<div class="form-row">
+			    <div class="form-group col-md-4">
+			        <label for="Technique">技術:</label>
+			        <input type="number" id="Technique" name="Technique" value="{{ character.Technique }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-4">
+			        <label for="Body">身体:</label>
+			        <input type="number" id="Body" name="Body" value="{{ character.Body }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-4">
+			        <label for="Hart">心:</label>
+			        <input type="number" id="Heart" name="Heart" value="{{ character.Heart }}" class="w-full">
+			    </div>
+			</div>
+
+			<!-- A, B, C, D, E, F -->
+			<div class="form-row">
+			    <div class="form-group col-md-2">
+			        <label for="A">A:</label>
+			        <input type="number" id="A" name="A" value="{{ character.A }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="B">B:</label>
+			        <input type="number" id="B" name="B" value="{{ character.B }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="C">C:</label>
+			        <input type="number" id="C" name="C" value="{{ character.C }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="D">D:</label>
+			        <input type="number" id="D" name="D" value="{{ character.D }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="E">E:</label>
+			        <input type="number" id="E" name="E" value="{{ character.E }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="F">F:</label>
+			        <input type="number" id="F" name="F" value="{{ character.F }}" class="w-full">
+			    </div>
+			</div>
+
+			<!-- d1, d2, d3, d4, d5, d6 -->
+			<div class="form-row">
+			    <div class="form-group col-md-2">
+			        <label for="d1">成長1:</label>
+			        <input type="number" id="d1" name="d1" value="{{ character.d1 }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="d2">成長2:</label>
+			        <input type="number" id="d2" name="d2" value="{{ character.d2 }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="d3">成長3:</label>
+			        <input type="number" id="d3" name="d3" value="{{ character.d3 }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="d4">成長4:</label>
+			        <input type="number" id="d4" name="d4" value="{{ character.d4 }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="d5">成長5:</label>
+			        <input type="number" id="d5" name="d5" value="{{ character.d5 }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="d6">成長6:</label>
+			        <input type="number" id="d6" name="d6" value="{{ character.d6 }}" class="w-full">
+			    </div>
+			</div>
+
+			<!-- e1, e2, e3, e4, e5, e6 -->
+			<div class="form-row">
+			    <div class="form-group col-md-2">
+			        <label for="e1">e1:</label>
+			        <input type="number" id="e1" name="e1" value="{{ character.e1 }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="e2">e2:</label>
+			        <input type="number" id="e2" name="e2" value="{{ character.e2 }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="e3">e3:</label>
+			        <input type="number" id="e3" name="e3" value="{{ character.e3 }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="e4">e4:</label>
+			        <input type="number" id="e4" name="e4" value="{{ character.e4 }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="e5">e5:</label>
+			        <input type="number" id="e5" name="e5" value="{{ character.e5 }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-2">
+			        <label for="e6">e6:</label>
+			        <input type="number" id="e6" name="e6" value="{{ character.e6 }}" class="w-full">
+			    </div>
+			</div>
+
+			<!-- 経験 -->
+			<div class="form-row">
+			    <div class="form-group col-md-3">
+			        <label for="experience">経験:</label>
+			        <input type="number" id="experience" name="experience" value="{{ character.experience }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-3">
+			        <label for="experience">所持金:</label>
+			        <input type="number" id="money" name="money" value="{{ character.money }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-3">
+			        <label for="debt">借金:</label>
+			        <input type="number" id="debt" name="debt" value="{{ character.debt }}" class="w-full">
+			    </div>
+			    <div class="form-group col-md-3">
+			        <label for="honor">名誉点:</label>
+			        <input type="number" id="honor" name="honor" value="{{ character.honor }}" class="w-full">
+			    </div>
+			</div>
+			
+			<div class="button-wrapper flex mt-4 justify-end">
+				<button type="submit" class="btn btn-warning bg-yellow-400 border-yellow-500">適用</button>
+			</div>
+			
+		</div> 
+		<!-- 右側: ステータス情報 -->
+		<div class="font-medium w-full">
+			<h3 class="text-2xl font-semibold mb-4 text-blue-400">ステータス情報 (自動反映)</h3>
+			
+			<!-- HP, MP, LEVEL -->
+			<div class="form-row">
+				<div class="form-group col-md-4">
+					<label for="HP">HP:</label>
+					<input type="number" id="HP" class="w-full bg-gray-800" value="{{ status.HP }}" readonly>
+				</div>
+				<div class="form-group col-md-4">
+					<label for="MP">MP:</label>
+					<input type="number" id="MP" class="w-full bg-gray-800" value="{{ status.MP }}" readonly>
+				</div>
+				<div class="form-group col-md-4">
+					<label for="LEVEL">LEVEL:</label>
+					<input type="number" id="LEVEL" class="w-full bg-gray-800" value="{{ status.LEVEL }}" readonly>
+				</div>
+			</div>
+
+			<!-- DEX, AGI, STR, VIT, INT, MND -->
+			<div class="form-row">
+				<div class="form-group col-md-2">
+					<label for="DEX">器用度:</label>
+					<input type="number" id="DEX" class="w-full bg-gray-800" value="{{ status.DEX }}" readonly>
+				</div>
+				<div class="form-group col-md-2">
+					<label for="AGI">敏捷度:</label>
+					<input type="number" id="AGI" class="w-full bg-gray-800" value="{{ status.AGI }}" readonly>
+				</div>
+				<div class="form-group col-md-2">
+					<label for="STR">筋力:</label>
+					<input type="number" id="STR" class="w-full bg-gray-800" value="{{ status.STR }}" readonly>
+				</div>
+				<div class="form-group col-md-2">
+					<label for="VIT">生命力:</label>
+					<input type="number" id="VIT" class="w-full bg-gray-800" value="{{ status.VIT }}" readonly>
+				</div>
+				<div class="form-group col-md-2">
+					<label for="INT">知力:</label>
+					<input type="number" id="INT" class="w-full bg-gray-800" value="{{ status.INT }}" readonly>
+				</div>
+				<div class="form-group col-md-2">
+					<label for="MND">精神力:</label>
+					<input type="number" id="MND" class="w-full bg-gray-800" value="{{ status.MND }}" readonly>
+				</div>
+			</div>
+
+			<!-- VITREG, MNDREG, MAG -->
+			<div class="form-row">
+				<div class="form-group col-md-4">
+					<label for="VITREG">生命抵抗力:</label>
+					<input type="number" id="VITREG" class="w-full bg-gray-800" value="{{ status.VITREG }}" readonly>
+				</div>
+				<div class="form-group col-md-4">
+					<label for="MNDREG">精神抵抗力:</label>
+					<input type="number" id="MNDREG" class="w-full bg-gray-800" value="{{ status.MNDREG }}" readonly>
+				</div>
+				<div class="form-group col-md-4">
+					<label for="MAG">魔力:</label>
+					<input type="number" id="MAG" class="w-full bg-gray-800" value="{{ status.MAG }}" readonly>
+				</div>
+			</div>
+	        <!-- 基本命中、回避、追加ダメージ -->
+	        <div class="form-row">
+				<div class="form-group col-md-4">
+					<label for="knowledge">基本命中力:</label>
+					<input type="number" id="knowledge" class="w-full bg-gray-800" value="{{ status.命中力 }}" readonly>
+				</div>
+				<div class="form-group col-md-4">
+					<label for="quickness">基本回避力:</label>
+					<input type="number" id="quickness" class="w-full bg-gray-800" value="{{ status.回避力 }}" readonly>
+				</div>
+				<div class="form-group col-md-4">
+					<label for="movement">基本追加ダメージ:</label>
+					<input type="number" id="movement" class="w-full bg-gray-800" value="{{ status.基本ダメージ }}" readonly>
+				</div>
+			</div>
+			<!-- ELSE -->
+			<div class="form-row">
+				<div class="form-group col-md-3">
+					<label for="knowledge">魔物知識:</label>
+					<input type="number" id="knowledge" class="w-full bg-gray-800" value="{{ status.魔物知識 }}" readonly>
+				</div>
+				<div class="form-group col-md-3">
+					<label for="quickness">先制力:</label>
+					<input type="number" id="quickness" class="w-full bg-gray-800" value="{{ status.先制力 }}" readonly>
+				</div>
+				<div class="form-group col-md-3">
+					<label for="movement">移動力:</label>
+					<input type="number" id="movement" class="w-full bg-gray-800" value="{{ status.移動力 }}" readonly>
+				</div>
+				<div class="form-group col-md-3">
+					<label for="fullmove">全力移動:</label>
+					<input type="number" id="fullmove" class="w-full bg-gray-800" value="{{ status.全力移動 }}" readonly>
+				</div>
+			</div>
+		</div>
+		
+	</div>
+	</form>
+		
+	<br>
+
+	<h3 class="text-2xl font-semibold mb-4 text-blue-400">技能情報</h3>
+	<div class="mt-4 border border-gray-300 dark:border-gray-700">
+		<!-- 技能情報 -->
+		<div class="flex">
+			<!-- 物理スキル -->
+			<div class="w-full"> <!-- 左詰め用にw-fullクラスを追加 -->
+			    <h4 class="text-xl font-semibold mb-4 text-left ml-2">物理系技能</h4> <!-- text-leftクラスを追加 -->
+			    {% for skill in skills_physical %}
+			    <div class="grid grid-cols-3 mb-2 ml-2">
+			        <label for="{{ skill.name }}" class="grid-item flex-grow-1 text-left font-medium text-gray-300 text-lg">{{ skill.name }}:</label> <!-- text-leftクラスを追加 -->
+			        <form method="POST" action="{{ url_for('edit_job', character_id=character.id, skill_id=skill.id) }}" class="grid-item col-span-2 form-inline">
+			            <div class="form-group-input mr-2">
+			                <input type="number" id="{{ skill.name }}" name="{{ skill.name }}" class="w-20 mr-4" value="{{ skill.level }}">
+			            </div>
+			            <button type="submit" name="action" value="change" class="text-green-400 hover:text-green-700 w-12 mr-2">変更</button>
+			            <button type="submit" name="action" value="delete" class="text-red-500 hover:text-red-700 w-12">削除</button>
+			        </form>
+			    </div>
+			    {% endfor %}
+			</div>
+
+
+			    
+			<!-- 魔法スキル -->
+			<div class="w-full">
+			    <h4 class="text-xl font-semibold mb-4 text-left">魔法系技能</h4>
+			    {% for skill in skills_magic %}
+			    <div class="grid grid-cols-3 mb-2 ml-2">
+			        <label for="{{ skill.name }}" class="grid-item flex-grow-1 text-left font-medium text-gray-300 text-lg">{{ skill.name }}:</label>
+			        <form method="POST" action="{{ url_for('edit_job', character_id=character.id, skill_id=skill.id) }}" class="grid-item col-span-2 form-inline">
+			            <div class="form-group-input mr-2">
+			                <input type="number" id="{{ skill.name }}" name="{{ skill.name }}" class="w-20 mr-4" value="{{ skill.level }}">
+			            </div>
+			            <button type="submit" name="action" value="change" class="text-green-400 hover:text-green-700 w-12 mr-2">変更</button>
+			            <button type="submit" name="action" value="delete" class="text-red-500 hover:text-red-700 w-12">削除</button>
+			        </form>
+			    </div>
+			    {% endfor %}
+			</div>
+			
+			<!-- その他のスキル -->
+			<div class="w-full">
+				<h4 class="text-xl font-semibold mb-2">その他</h4>
+				{% for skill in skills_other %}
+				<div class="grid grid-cols-3 mb-2 ml-2">
+			        <label for="{{ skill.name }}" class="grid-item flex-grow-1 text-left font-medium text-gray-300 text-lg text-left">{{ skill.name }}:</label>
+			        <form method="POST" action="{{ url_for('edit_job', character_id=character.id, skill_id=skill.id) }}" class="grid-item col-span-2 form-inline">
+			            <div class="form-group-input mr-2">
+			                <input type="number" id="{{ skill.name }}" name="{{ skill.name }}" class="w-20 mr-4" value="{{ skill.level }}">
+			            </div>
+			            <button type="submit" name="action" value="change" class="text-green-400 hover:text-green-700 w-12 mr-2">変更</button>
+			            <button type="submit" name="action" value="delete" class="text-red-500 hover:text-red-700 w-12">削除</button>
+			        </form>
+			    </div>
+			    {% endfor %}
+			</div>
+			
+			<div class="w-full">
+				<h4 class="text-xl font-semibold mb-4 text-left">習得魔法</h4>
+				{% for magic in UsableMagics %}
+			    <div class="mb-2 ml-2 text-gray-300">
+			        <p>{{ magic.name }} : {{ magic.level }} </p>
+			    </div>
+			    {% endfor %}
+			</div>
+		</div>
+
+	
+		
+		<!-- スキル追加フォーム -->
+		<h5 class="text-xl font-bold mb-4 ml-2">技能の追加</h5>
+		<form method="POST" action="{{ url_for('add_job', character_id=character.id) }}" class="space-y-4">
+		    <div class="flex flex-wrap md:flex-nowrap justify-start items-center space-y-4 md:space-y-0 md:space-x-4">
+		        <div class="flex flex-col w-full md:w-auto">
+		            <label for="skill_name" class="text-lg font-medium mb-2 ml-2">技能:</label>
+		            <select id="skill_name" name="skill_name" class="bg-gray-700 text-white p-2 rounded ml-2 mb-2">
+		                <!-- Options will be dynamically populated -->
+		            </select>
+		        </div>
+
+		        <div class="flex flex-col w-full md:w-auto">
+		            <label for="skill_level" class="text-lg font-medium mb-2">レベル:</label>
+		            <input type="number" id="skill_level" name="skill_level" value="1" min="1" class="bg-gray-700 text-white p-2 rounded w-full md:w-20 mb-2">
+		        </div>
+
+		        <div class="flex flex-col w-full md:w-auto">
+		            <label for="skill_type" class="text-lg font-medium mb-2">タイプ:</label>
+		            <select id="skill_type" name="skill_type" class="bg-gray-700 text-white p-2 rounded mb-2">
+		                <option value="物理">物理</option>
+		                <option value="魔法">魔法</option>
+		                <option value="その他">その他</option>
+		            </select>
+		        </div>
+
+		        <div class="flex justify-center w-full md:w-auto">
+		            <button type="submit" class="btn btn-warning bg-yellow-400 border-yellow-500 rounded mt-8 mb-2">
+		                技能を追加
+		            </button>
+		        </div>
+		    </div>
+		</form>
+
+	</div>
+	
+	<br>
+	
+	<h3 class="text-2xl font-semibold mb-4 text-blue-400">習得特技</h3>
+	<div class="xl:w-full 2xl:w-2/3 border border-gray-300">
+		<div class="ml-2 mt-2 flex">
+			<div class="w-full">
+				<h4 class="text-xl font-semibold mb-2 text-left">戦闘特技</h4>
+				{% for skill in BattleSkills %}
+				<div class="bg-gray-800 p-4 rounded shadow-md mb-2 mr-2 w-full">
+					<div class="flex justify-between">
+				        <h3 class="text-xl font-bold mb-2">{{ skill.name }}</h3>
+				        <button onclick="showEditForm('battle_skill_{{skill.id}}')" class="text-blue-500 hover:text-blue-700 ml-4 w-12">編集</button>
+				    </div>
+				    <div class="flex">
+				    	<div class="flex w-full mr-4">
+						    <p>習得方法 : </p> 
+						    <p class="text-gray-300 ml-4"> {{ skill.getway }} </p> 
+						</div>
+					    <div class="flex w-full mr-4">
+						    <p>  習得レベル : </p> 
+						    <p class="text-gray-300 ml-4">  {{ skill.getlevel }}</p>
+						</div>
+					</div>
+					<p class="text-gray-300 mb-4">{{ skill.explain }}</p>
+					<div	class="w-full">
+					<form id="battle_skill_{{skill.id}}" class="hidden" method="POST" action="{{ url_for('edit_skill', character_id=character.id,skill_id=skill.id) }}">
+						<div class="flex">
+						    <div>
+						    	<label for="{{skill.name}}" class="text-sm font-medium">習得特技名:</label>
+						        <input type="text" id="{{skill.name}}" name="{{skill.name}}" value="{{ skill.name }}" class="text-gray-300 w-full">
+						    </div>
+						    <div class="mb-2 ml-2">
+						    	<label for="battleway_{{skill.id}}" class="text-sm font-medium">習得方法:</label>
+						        <input type="text" id="battleway_{{skill.id}}" name="battleway_{{skill.id}}" value="{{ skill.getway }}" class="text-gray-300 w-full">
+						    </div>
+						    <div class="flex">
+							    <div class="mb-2 ml-2">
+							    	<label for="battlelevel_{{skill.id}}" class="text-sm font-medium">習得レベル:</label>
+							        <input type="text" id="battlelevel_{{skill.id}}" name="battlelevel_{{skill.id}}" value="{{ skill.getlevel }}" class="text-gray-300 w-full">
+							    </div>
+							    <div class="mb-2 ml-2">
+							    	<label for="battletype_{{skill.id}}" class="text-sm font-medium">分類:</label>
+							        <input type="text" id="battletype_{{skill.id}}" name="battletype_{{skill.id}}" value="{{ skill.type }}" class="text-gray-300 w-full">
+							    </div>
+							</div>
+						</div>    
+						<div>
+							<label for="battlecomand_{{skill.id}}" class="text-sm font-medium">コマンド:</label>
+						    <input type="text" id="battlecomand_{{skill.id}}" name="battlecomand_{{skill.id}}" value="{{ skill.command }}" class="w-full">
+						</div>
+						<div>
+							<label for="battleexplain_{{skill.id}}" class="text-sm font-medium">説明:</label>
+						    <input type="text" id="battleexplain_{{skill.id}}" name="battleexplain_{{skill.id}}" value="{{ skill.explain }}" class="w-full">
+						</div>
+						<div class="flex justify-end mt-3">
+							<button type="submit" name="action" value="delete" class="bg-red-400 border-red-500 hover:bg-red-500 text-gray-300 font-bold py-2 px-4 rounded mr-4">削除</button>
+				            <button type="submit" name="action" value="change" class="bg-yellow-400 border-yellow-500 hover:bg-yellow-500 text-gray-600 font-bold py-2 px-4 rounded">追加</button>
+				        </div> 
+					</form>
+					</div>
+				</div>
+			    {% endfor %}
+			</div>
+			<div class="w-full">
+				<h4 class="text-xl font-semibold mb-2 text-left">汎用特技</h4>
+				{% for skill in OtherSkills %}
+			    <div class="bg-gray-800 p-4 rounded shadow-md mb-2 mr-2 w-full">
+					<div class="flex justify-between">
+				        <h3 class="text-xl font-bold mb-2">{{ skill.name }}</h3>
+				        <button onclick="showEditForm('other_skill_{{skill.id}}')" class="text-blue-500 hover:text-blue-700 ml-4 w-12">編集</button>
+				    </div>
+				    <div class="flex">
+				    	<div class="flex w-full mr-4">
+						    <p>習得方法 : </p> 
+						    <p class="text-gray-300 ml-4"> {{ skill.getway }} </p> 
+						</div>
+					    <div class="flex w-full mr-4">
+						    <p>  習得レベル : </p> 
+						    <p class="text-gray-300 ml-4">  {{ skill.getlevel }}</p>
+						</div>
+					</div>
+					<p class="text-gray-300 mb-4">{{ skill.explain }}</p>
+					<form id="other_skill_{{skill.id}}" class="hidden" method="POST" action="{{ url_for('edit_skill', character_id=character.id,skill_id=skill.id) }}">
+						<div class="flex">
+						    <div>
+						    	<label for="{{skill.name}}" class="text-sm font-medium">習得特技名:</label>
+						        <input type="text" id="{{skill.name}}" name="{{skill.name}}" value="{{ skill.name }}" class="text-gray-300 w-full">
+						    </div>
+						    <div class="mb-2 ml-2">
+						    	<label for="battleway_{{skill.id}}" class="text-sm font-medium">習得方法:</label>
+						        <input type="text" id="battleway_{{skill.id}}" name="battleway_{{skill.id}}" value="{{ skill.getway }}" class="text-gray-300 w-full">
+						    </div>
+						    <div class="flex">
+							    <div class="mb-2 ml-2">
+							    	<label for="battlelevel_{{skill.id}}" class="text-sm font-medium">習得レベル:</label>
+							        <input type="text" id="battlelevel_{{skill.id}}" name="battlelevel_{{skill.id}}" value="{{ skill.getlevel }}" class="text-gray-300 w-full">
+							    </div>
+							    <div class="mb-2 ml-2">
+							    	<label for="battletype_{{skill.id}}" class="text-sm font-medium">分類:</label>
+							        <input type="text" id="battletype_{{skill.id}}" name="battletype_{{skill.id}}" value="{{ skill.type }}" class="text-gray-300 w-full">
+							    </div>
+							</div>
+						</div>    
+						<div>
+							<label for="battlecomand_{{skill.id}}" class="text-sm font-medium">コマンド:</label>
+						    <input type="text" id="battlecomand_{{skill.id}}" name="battlecomand_{{skill.id}}" value="{{ skill.command }}" class="w-full">
+						</div>
+						<div>
+							<label for="battleexplain_{{skill.id}}" class="text-sm font-medium">説明:</label>
+						    <input type="text" id="battleexplain_{{skill.id}}" name="battleexplain_{{skill.id}}" value="{{ skill.explain }}" class="w-full">
+						</div>
+						<div class="flex justify-end mt-3">
+							<button type="submit" name="action" value="delete" class="bg-red-400 border-red-500 hover:bg-red-500 text-gray-300 font-bold py-2 px-4 rounded mr-4">削除</button>
+				            <button type="submit" name="action" value="change" class="bg-yellow-400 border-yellow-500 hover:bg-yellow-500 text-gray-600 font-bold py-2 px-4 rounded">追加</button>
+				        </div> 
+					</form>
+				</div>
+			    {% endfor %}
+			</div>
+		</div>
+	
+		<!-- 戦闘特技追加フォーム -->
+		<button onclick="showEditForm('add_battleskill')" class="text-green-500 hover:text-green-700 text-xl mt-2 ml-2">＋特技の追加</button>
+		<form id="add_battleskill" method="POST" action="{{ url_for('add_skill', character_id=character.id) }}" class="hidden">
+	    <div class="space-y-2 mt-2 md:w-full lg:w-1/2 bg-gray-800 p-4 rounded shadow-md">
+	    	<div class="mr-2 w-full">
+				<label for="battle_skill_name" class="block text-sm font-medium">習得特技名:</label>
+				<input type="text" id="battle_skill_name" name="battle_skill_name" class="block w-full">
+	    	</div>
+	        <div class="flex">
+	        	<div class="mr-2 w-full">
+	    			<label for="battle_skill_type" class="block text-sm font-medium">分類:</label>
+	    			<select id="battle_skill_type" name="battle_skill_type" class="block w-full">
+		        		<option value="戦闘">戦闘</option>
+	            		<option value="汎用">汎用</option>
+		    		</select>
+	        	</div>
+	        	<div class="mr-2 w-full">
+	                <label for="battle_skill_way" class="block text-sm font-medium">習得方法:</label>
+	                <select id="battle_skill_way" name="battle_skill_way" class="block w-full">
+	                	<option value="冒険者レベル">冒険者レベル</option>
+	            		<option value="自動習得">自動習得</option>
+	            		<option value="その他">その他</option>
+		    		</select>
+	        	</div>
+	        	<div class="mr-2 w-full">
+	                <label for="battle_skill_level" class="block text-sm font-medium">習得レベル:</label>
+	                <input type="number" id="battle_skill_level" name="battle_skill_level" class="block w-full">
+	        	</div>
+	        </div>
+	    	<div class="mr-2 w-full">
+	            <label for="battle_skill_command" class="block text-sm font-medium">コマンド:</label>
+	            <input type="text" id="battle_skill_command" name="battle_skill_command" class="block w-full">
+	    	</div>
+	        <div class="mr-2 w-full">
+	            <label for="battle_skill_explain" class="block text-sm font-medium">説明:</label>
+	            <textarea id="battle_skill_explain" name="battle_skill_explain" class="block w-full mr-8" row=2></textarea>
+	    	</div>
+	    	<div class="flex justify-end">
+	            <button type="submit" class="bg-yellow-400 border-yellow-500 hover:bg-yellow-500 text-gray-600 font-bold py-2 px-4 rounded">追加</button>
+	        </div> 
+	    </div>
+		</form>
+	</div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script>
+	// スキル名のリストを定義
+    const skillOptions = {
+        '物理': ['ファイター', 'グラップラー', 'フェンサー', 'シューター'],
+        '魔法': ['ソーサラー', 'コンジュラー', 'フェアリーテイマー', 'プリースト', 'マギテック', 'ウィザード'],
+        'その他': ['セージ', 'アルケミスト', 'バード', 'エンハンサー', 'スカウト', 'レンジャー', 'ミスティック', 'ライダー', 'ウォーリーダー']
+    };
+
+    // タイプの選択が変更された時に呼び出される関数
+    function updateSkillNames() {
+        const skillTypeSelect = document.getElementById('skill_type');
+        const skillNameSelect = document.getElementById('skill_name');
+
+        // 選択されているタイプを取得
+        const selectedType = skillTypeSelect.value;
+
+        // スキル名の選択肢をクリア
+        skillNameSelect.innerHTML = '';
+
+        // 新しいスキル名の選択肢を追加
+        skillOptions[selectedType].forEach(skill => {
+            const option = document.createElement('option');
+            option.value = skill;
+            option.textContent = skill;
+            skillNameSelect.appendChild(option);
+        });
+    }
+
+    // ページ読み込み時に初期のスキル名リストを設定
+    document.addEventListener('DOMContentLoaded', (event) => {
+        updateSkillNames(); // 初期設定
+    });
+
+    // タイプの選択が変更された時にスキル名リストを更新
+    document.getElementById('skill_type').addEventListener('change', updateSkillNames);
+    
+    <!-- JavaScript for showing/hiding the edit forms -->
+    function showEditForm(formname) {
+        var form = document.getElementById(formname);
+        if (form.classList.contains('hidden')) {
+            form.classList.remove('hidden');
+        } else {
+            form.classList.add('hidden');
+        }
+    }
+
+    
+</script>
+{% endblock %}

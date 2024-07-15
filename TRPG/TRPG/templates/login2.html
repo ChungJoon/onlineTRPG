@@ -1,0 +1,13 @@
+<!-- login.html -->
+{% extends "base.html" %}
+{% block title %}ログイン{% endblock %}
+{% block content %}
+<h1 class="text-3xl font-bold text-silver-400 mb-4">ログイン</h1>
+<form method="POST" action="/">
+    <label for="id">ユーザーID:</label>
+    <input type="text" id="id" name="id"><br><br>
+    <label for="pwd">パスワード:</label>
+    <input type="text" id="pwd" name="pwd"><br><br>
+    
+    <button type="submit" name="action" value="login" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">ログイン</button>
+{% endblock %}

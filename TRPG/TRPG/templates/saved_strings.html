@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>保存された文字列</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="dark-mode">
+    <div class="container mx-auto">
+        <h1 class="text-4xl font-bold text-center mt-10">保存された文字列</h1>
+        <div class="mt-10">
+            <ul>
+                {% for string in strings %}
+                <li class="mb-4 p-4 bg-gray-700 rounded">
+                    <h2 class="text-2xl">{{ string.name }}</h2>
+                    <p>{{ string.content }}</p>
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="text-center mt-10">
+                <a href="{{ url_for('command', character_id=character.id) }}" class="flex items-center p-2 text-white-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">戻る</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

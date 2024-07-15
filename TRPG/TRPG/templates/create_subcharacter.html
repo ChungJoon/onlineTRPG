@@ -1,0 +1,244 @@
+{% extends "base.html" %}
+{% block title %}CPU魔物作成ページ{% endblock %}
+{% block style %}
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<form method="POST" action="{{ url_for('create_subcharacter', character_id=character.id ) }}" class="ml-2">
+    <div class="container mt-4" style="max-width:64rem">
+        <h3 class="text-3xl font-semibold mb-4">CPU/魔物作成ページ情報</h3>
+        <h4 class="font-semibold mb-1">メイン情報の名前と部位1の名前は必須です。1部位のみの時は本体等の記述をしてください。</h3>
+        <h4 class="font-semibold mb-4">複数部位を追加したいときは下の「部位を追加」ボタンを押してください。ただし部位の名前を記入しなかった場合その部位は登録されません。</h3>
+
+
+        <!-- Name, Level, Type -->
+        <h4 class="text-2xl font-semibold mb-4">メイン情報</h4>
+        <div class="flex mb-4">
+            <div class="w-full mr-4">
+                <label for="name">名前:</label>
+                <input type="text" id="name" name="name" class="w-full bg-gray-800 rounded-md p-2">
+            </div>
+            <div class="w-full mr-4">
+                <label for="Level">レベル:</label>
+                <input type="number" id="Level" name="Level" class="w-full bg-gray-800 rounded-md p-2">
+            </div>
+            <div class="w-full mr-4">
+                <label for="type">種類:</label>
+                <select id="type" name="type" class="w-full bg-gray-800 rounded-md p-2">
+                    <option value="魔物">魔物</option>
+                    <option value="CPU">CPU</option>
+                    <option value="その他">その他</option>
+                </select>
+            </div>
+        </div>
+        <div class="mb-4 mr-4">
+            <label for="detail">詳細:</label>
+            <textarea id="detail" name="detail" class="w-full bg-gray-800 rounded-md p-2" rows="4"></textarea>
+        </div>
+
+        <!-- Parts Section -->
+        <div id="parts-container">
+            <div class="part mb-8" id="part_1">
+                <h4 class="text-2xl font-semibold mb-4">部位 1:</h4>
+                <div class="mb-4 mr-4">
+                	<input type="hidden" id="part_1_number" name="part_1_number" class="w-full bg-gray-800 rounded-md p-2 mr-4" value=1 readonly>
+                    <label for="part_1_name">部位の名前:</label>
+                    <input type="text" id="part_1_name" name="part_1_name" class="w-full bg-gray-800 rounded-md p-2">
+                </div>
+                <!-- HP, MP, Damage, Magic Power -->
+                <div class="flex mb-4">
+                    <div class="w-full mr-4">
+                        <label for="part_1_HP">HP:</label>
+                        <input type="number" id="part_1_HP" name="part_1_HP" class="w-full bg-gray-800 rounded-md p-2">
+                    </div>
+                    <div class="w-full mr-4">
+                        <label for="part_1_MP">MP:</label>
+                        <input type="number" id="part_1_MP" name="part_1_MP" class="w-full bg-gray-800 rounded-md p-2">
+                    </div>
+                    <div class="w-full mr-4">
+                        <label for="part_1_damage">基礎ダメージ:</label>
+                        <input type="number" id="part_1_damage" name="part_1_damage" class="w-full bg-gray-800 rounded-md p-2">
+                    </div>
+                    <div class="w-full mr-4">
+                        <label for="part_1_magic_power">魔力:</label>
+                        <input type="number" id="part_1_magic_power" name="part_1_magic_power" class="w-full bg-gray-800 rounded-md p-2">
+                    </div>
+                </div>
+
+                <!-- Accuracy, Evasion, Defence -->
+                <div class="flex mb-4">
+                    <div class="w-full mr-4">
+                        <label for="part_1_Accuracy">命中力:</label>
+                        <input type="number" id="part_1_Accuracy" name="part_1_Accuracy" class="w-full bg-gray-800 rounded-md p-2">
+                    </div>
+                    <div class="w-full mr-4">
+                        <label for="part_1_Evasion">回避力:</label>
+                        <input type="number" id="part_1_Evasion" name="part_1_Evasion" class="w-full bg-gray-800 rounded-md p-2">
+                    </div>
+                    <div class="w-full mr-4">
+                        <label for="part_1_Defence">防御点:</label>
+                        <input type="number" id="part_1_Defence" name="part_1_Defence" class="w-full bg-gray-800 rounded-md p-2">
+                    </div>
+                </div>
+
+                <!-- VID, MND, Weakpoint -->
+                <div class="flex mb-4">
+                    <div class="w-full mr-4">
+                        <label for="part_1_VID">生命抵抗力:</label>
+                        <input type="number" id="part_1_VID" name="part_1_VID" class="w-full bg-gray-800 rounded-md p-2">
+                    </div>
+                    <div class="w-full mr-4">
+                        <label for="part_1_MND">精神抵抗力:</label>
+                        <input type="number" id="part_1_MND" name="part_1_MND" class="w-full bg-gray-800 rounded-md p-2">
+                    </div>
+                    <div class="w-full mr-4">
+                        <label for="part_1_weakpoint">弱点:</label>
+                        <input type="text" id="part_1_weakpoint" name="part_1_weakpoint" class="w-full bg-gray-800 rounded-md p-2">
+                    </div>
+                </div>
+
+                <!-- Require Quickness, Knowledge, Require Knowledge -->
+                <div class="flex mb-4">
+                    <div class="w-full mr-4">
+                        <label for="part_1_Knowledge">魔物知識:</label>
+                        <input type="number" id="part_1_Knowledge" name="part_1_Knowledge" class="w-full bg-gray-800 rounded-md p-2">
+                    </div>
+                    <div class="w-full mr-4">
+                        <label for="part_1_Require_Quickness">先制力要求値:</label>
+                        <input type="number" id="part_1_Require_Quickness" name="part_1_Require_Quickness" class="w-full bg-gray-800 rounded-md p-2">
+                    </div>
+                    <div class="w-full mr-4">
+                        <label for="part_1_Require_knowledge">魔物知識要求値:</label>
+                        <input type="number" id="part_1_Require_knowledge" name="part_1_Require_knowledge" class="w-full bg-gray-800 rounded-md p-2">
+                    </div>
+                </div>
+
+                <!-- Detail -->
+                <div class="flex mb-4">
+                    <div class="w-full mr-4">
+                        <label for="part_1_detail">詳細:</label>
+                        <textarea id="part_1_detail" name="part_1_detail" class="w-full bg-gray-800 rounded-md p-2" rows="2"></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+		
+		<div class="flex justify-end mb-4">
+	        <!-- Add Part Button -->
+	        <div class="flex mr-4 ">
+	            <button type="button" id="add-part-button" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">部位を追加</button>
+	        </div>
+	        
+	        <!-- Submit Button -->
+	        <div class="flex justify-end">
+	            <button type="submit" name="action" value="save" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">作成</button>
+	        </div>
+		</div>
+    </div>
+</form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let partCounter = 1; // 現在の部位のカウンター
+        const partsContainer = document.getElementById('parts-container');
+        const addPartButton = document.getElementById('add-part-button');
+
+        addPartButton.addEventListener('click', function () {
+            partCounter++; // 新しい部位の番号をインクリメント
+
+            // 新しい部位のHTML
+            const newPartHTML = `
+                <div class="part mb-8" id="part_${partCounter}">
+                    <h4 class="text-2xl font-semibold mb-4 mr-4">部位 ${partCounter}:</h4>
+                    <div class="mb-4 mr-4">
+                    	<input type="hidden" id="part_${partCounter}_number" name="part_${partCounter}_number" class="w-full bg-gray-800 rounded-md p-2 mr-4" value="${partCounter}" readonly>
+                        <label for="part_${partCounter}_name">部位の名前:</label>
+                        <input type="text" id="part_${partCounter}_name" name="part_${partCounter}_name" class="w-full bg-gray-800 rounded-md p-2">
+                    </div>
+                    <!-- HP, MP, Damage, Magic Power -->
+                    <div class="flex mb-4">
+                        <div class="w-full mr-4">
+                            <label for="part_${partCounter}_HP">HP:</label>
+                            <input type="number" id="part_${partCounter}_HP" name="part_${partCounter}_HP" class="w-full bg-gray-800 rounded-md p-2">
+                        </div>
+                        <div class="w-full mr-4">
+                            <label for="part_${partCounter}_MP">MP:</label>
+                            <input type="number" id="part_${partCounter}_MP" name="part_${partCounter}_MP" class="w-full bg-gray-800 rounded-md p-2">
+                        </div>
+                        <div class="w-full mr-4">
+                            <label for="part_${partCounter}_damage">基礎ダメージ:</label>
+                            <input type="number" id="part_${partCounter}_damage" name="part_${partCounter}_damage" class="w-full bg-gray-800 rounded-md p-2">
+                        </div>
+                        <div class="w-full mr-4">
+                            <label for="part_${partCounter}_magic_power">魔力:</label>
+                            <input type="number" id="part_${partCounter}_magic_power" name="part_${partCounter}_magic_power" class="w-full bg-gray-800 rounded-md p-2">
+                        </div>
+                    </div>
+
+                    <!-- Accuracy, Evasion, Defence -->
+                    <div class="flex mb-4">
+                        <div class="w-full mr-4">
+                            <label for="part_${partCounter}_Accuracy">命中力:</label>
+                            <input type="number" id="part_${partCounter}_Accuracy" name="part_${partCounter}_Accuracy" class="w-full bg-gray-800 rounded-md p-2">
+                        </div>
+                        <div class="w-full mr-4">
+                            <label for="part_${partCounter}_Evasion">回避力:</label>
+                            <input type="number" id="part_${partCounter}_Evasion" name="part_${partCounter}_Evasion" class="w-full bg-gray-800 rounded-md p-2">
+                        </div>
+                        <div class="w-full mr-4">
+                            <label for="part_${partCounter}_Defence">防御点:</label>
+                            <input type="number" id="part_${partCounter}_Defence" name="part_${partCounter}_Defence" class="w-full bg-gray-800 rounded-md p-2">
+                        </div>
+                    </div>
+
+                    <!-- VID, MND, Weakpoint -->
+                    <div class="flex mb-4">
+                        <div class="w-full mr-4">
+                            <label for="part_${partCounter}_VID">生命抵抗力:</label>
+                            <input type="number" id="part_${partCounter}_VID" name="part_${partCounter}_VID" class="w-full bg-gray-800 rounded-md p-2">
+                        </div>
+                        <div class="w-full mr-4">
+                            <label for="part_${partCounter}_MND">精神抵抗力:</label>
+                            <input type="number" id="part_${partCounter}_MND" name="part_${partCounter}_MND" class="w-full bg-gray-800 rounded-md p-2">
+                        </div>
+                        <div class="w-full mr-4">
+                            <label for="part_${partCounter}_weakpoint">弱点:</label>
+                            <input type="text" id="part_${partCounter}_weakpoint" name="part_${partCounter}_weakpoint" class="w-full bg-gray-800 rounded-md p-2">
+                        </div>
+                    </div>
+
+                    <!-- Require Quickness, Knowledge, Require Knowledge -->
+                    <div class="flex mb-4">
+                        <div class="w-full mr-4">
+                            <label for="part_${partCounter}_Knowledge">魔物知識:</label>
+                            <input type="number" id="part_${partCounter}_Knowledge" name="part_${partCounter}_Knowledge" class="w-full bg-gray-800 rounded-md p-2">
+                        </div>
+                        <div class="w-full mr-4">
+                            <label for="part_${partCounter}_Require_Quickness">先制力要求値:</label>
+                            <input type="number" id="part_${partCounter}_Require_Quickness" name="part_${partCounter}_Require_Quickness" class="w-full bg-gray-800 rounded-md p-2">
+                        </div>
+                        <div class="w-full mr-4">
+                            <label for="part_${partCounter}_Require_knowledge">魔物知識要求値:</label>
+                            <input type="number" id="part_${partCounter}_Require_knowledge" name="part_${partCounter}_Require_knowledge" class="w-full bg-gray-800 rounded-md p-2">
+                        </div>
+                    </div>
+
+                    <!-- Detail -->
+                    <div class="flex mb-4">
+                        <div class="w-full mr-4">
+                            <label for="part_${partCounter}_detail">詳細:</label>
+                            <textarea id="part_${partCounter}_detail" name="part_${partCounter}_detail" class="w-full bg-gray-800 rounded-md p-2" rows="2"></textarea>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 新しい部位を追加
+            const newPart = document.createElement('div');
+            newPart.innerHTML = newPartHTML;
+            partsContainer.appendChild(newPart);
+        });
+    });
+</script>
+{% endblock %}
