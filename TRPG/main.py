@@ -457,18 +457,20 @@ def items(character_id):
     # 弾倉を取得  
     bulletboxes = []
     for weapon in weapons:
-        bulletbox = BulletBox.query.filter_by(related_id=weapon.id).first()
-        box_dict = {
-            'id': bulletbox.id,
-            'weapon_name': bulletbox.weapon_name,
-            'maxbullet': bulletbox.maxbullet,
-            'bullets': []
-        }
-        for i in range(1, bulletbox.maxbullet + 1):
-            col_name = f'col{i}'
-            bullet_id = getattr(bulletbox, col_name)
-            box_dict['bullets'].append(bullet_id)
-        bulletboxes.append(box_dict)
+        if not weapon is None:
+            bulletbox = BulletBox.query.filter_by(related_id=weapon.id).first()
+            if not bulletbox is None:
+                box_dict = {
+                    'id': bulletbox.id,
+                    'weapon_name': bulletbox.weapon_name,
+                    'maxbullet': bulletbox.maxbullet,
+                    'bullets': []
+                }
+                for i in range(1, bulletbox.maxbullet + 1):
+                    col_name = f'col{i}'
+                    bullet_id = getattr(bulletbox, col_name)
+                    box_dict['bullets'].append(bullet_id)
+                bulletboxes.append(box_dict)
 
     Head = Equipment.query.filter_by(related_id=character_id, type="head").first()
     Face = Equipment.query.filter_by(related_id=character_id, type="face").first()
