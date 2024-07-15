@@ -273,7 +273,7 @@
             <h2 class="text-2xl font-bold text-yellow-300 mb-2">コマンド結果</h2>
             <div id="result-output" class="text-white">
 	            {% for log in battle_log %}
-	            <p> {{ log | e | safe }}</p>
+	            <p> {{ log }}</p>
 	            {% endfor %}
             </div>
         </div>
@@ -295,6 +295,19 @@
 {% endblock %}
 
 {% block script %}
+<script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+<script>
+    const socket = io();
+
+    socket.on('log_update', function(data) {
+        const logContainer = document.getElementById('result-output');
+        const newLog = document.createElement('div');
+        newLog.innerHTML = data.message;
+        logContainer.appendChild(newLog);
+        // スクロールを一番下に移動
+        logContainer.scrollTop = logContainer.scrollHeight;
+    });
+</script>
 <script>
     
     document.getElementById('command-list').addEventListener('change', function() {

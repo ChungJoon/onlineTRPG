@@ -307,6 +307,7 @@ def getstatus(unit_name,status_name):
             status_value = getattr(unit,status_name)
             log_message = f"{unit_name}の{status_name}: {status_value}"
         except:
+            status_value = 0
             log_message = f"{unit_name}に'{status_name}'というステータスは存在しません"
         if unit.type == "魔物":
             log_message = f"魔物のステータスは参照できません。"
@@ -596,51 +597,55 @@ def challenge(bonus,targetstatus):
 def physical_attack(weapon_id):
     from dataclass import Weapon,Unit
     
-    # 基本ダメージ計算
-    basicdamage = getstatus(Actor,"基本ダメージ")[1]
-    weapondamage = getweapon(weapon_id,"追加ダメージ")[1]
-    if weapondamage is None:
-        weapondamage = 0
-    weaponpower = getweapon(weapon_id,"威力")[1]
-    weaponcritical = getweapon(weapon_id,"クリティカル")[1]
-    criticalbonus = getstatus(Actor,"クリティカルボーナス")[1]
+    try:
+        # 基本ダメージ計算
+        basicdamage = getstatus(Actor,"基本ダメージ")[1]
+        weapondamage = getweapon(weapon_id,"追加ダメージ")[1]
+        if weapondamage is None:
+            weapondamage = 0
+        weaponpower = getweapon(weapon_id,"威力")[1]
+        weaponcritical = getweapon(weapon_id,"クリティカル")[1]
+        criticalbonus = getstatus(Actor,"クリティカルボーナス")[1]
 
-    damage = int(basicdamage) + int(weapondamage)
-    log_message = f"武器威力:{weaponpower} 基本追加ダメージ:{damage} >> "
+        damage = int(basicdamage) + int(weapondamage)
+        log_message = f"武器威力:{weaponpower} 基本追加ダメージ:{damage} >> "
 
-    # 命中判定
-    Accuracy = int(getstatus(Actor,"命中")[1]) + int(getweapon(weapon_id,"命中")[1])
-    message, bool, dicevalue = challenge(Accuracy,"回避")
-    log_message += message
+        # 命中判定
+        Accuracy = int(getstatus(Actor,"命中")[1]) + int(getweapon(weapon_id,"命中")[1])
+        message, bool, dicevalue = challenge(Accuracy,"回避")
+        log_message += message
 
-    # ダメージ結果
-    powerdamage = power(int(weaponpower),int(dicevalue))[1]
-    maindamage = int(basicdamage) + int(weapondamage) + powerdamage
-    damage_value = maindamage
+        # ダメージ結果
+        powerdamage = power(int(weaponpower),int(dicevalue))[1]
+        maindamage = int(basicdamage) + int(weapondamage) + powerdamage
+        damage_value = maindamage
 
-    message = f" >> 基礎ダメージ:{powerdamage}"
-    log_message += message
+        message = f" >> 基礎ダメージ:{powerdamage}"
+        log_message += message
 
-    # クリティカル計算
-    critical_line = int(weaponcritical) - int(criticalbonus)
-    if dicevalue >= int(critical_line):
-        message, cvalue = criticalloop(critical_line,weaponpower)
-        damage_value = maindamage + cvalue
-        log_message += "クリティカル計算:" + message
+        # クリティカル計算
+        critical_line = int(weaponcritical) - int(criticalbonus)
+        if dicevalue >= int(critical_line):
+            message, cvalue = criticalloop(critical_line,weaponpower)
+            damage_value = maindamage + cvalue
+            log_message += "クリティカル計算:" + message
 
-    # ターゲットに対するダメージ計算
-    for target in Targets:
-        if challengebool[target] == True:
-            message = f" >> {target}に{damage_value}のダメージを与えます"
-            log_message += message
+        # ターゲットに対するダメージ計算
+        for target in Targets:
+            if challengebool[target] == True:
+                message = f" >> {target}に{damage_value}のダメージを与えます"
+                log_message += message
 
-            defence = getstatus(target,"defence")[1]
-            actualdamage = (damage_value - defence) * (-1)
-            message, newHP = setstatus(target,"HP",actualdamage)
-            
-        else:
-            message = f" >> {target}は回避しました"
-            log_message += message
+                defence = getstatus(target,"defence")[1]
+                actualdamage = (damage_value - defence) * (-1)
+                message, newHP = setstatus(target,"HP",actualdamage)
+                
+            else:
+                message = f" >> {target}は回避しました"
+                log_message += message
+
+    except Exception as e:
+        log_message += f"\nエラーが発生しました: {str(e)}"
 
     return log_message, damage_value
 

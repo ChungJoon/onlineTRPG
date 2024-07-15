@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import inspect,func
 from flask_cors import CORS
 from jinja2 import Template
+from flask_socketio import SocketIO
 
 db = SQLAlchemy()
 
@@ -17,7 +18,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # データベースオブジェクトの作成
 db = SQLAlchemy(app)
 
-CORS(app)
+socketio = SocketIO(app)
 
 # Custom filter to use getattr in Jinja2 templates
 @app.template_filter('getattr')
@@ -86,6 +87,7 @@ def login2(character_id):
                 return render_template('login2.html', message="IDまたはパスワードが正しくありません。")
 
     return render_template('login2.html',character=character)
+
 
 @app.route("/user")
 def show_user_profile():
@@ -171,6 +173,9 @@ def profile(character_id):
                            BattleSkills=BattleSkills,OtherSkills=OtherSkills)
 
 battle_log=[]
+
+def log_update(message):
+    socketio.emit('log_update', {'message': message})
 
 @app.route('/battlefield/<int:character_id>', methods=['GET', 'POST'])
 def battlefield(character_id):
@@ -724,6 +729,7 @@ def battle_command(character_id):
         if code_input:  # 空でない場合のみ処理を実行
             result = execute_code(code_input,actor,targets)
             battle_log.append(result)
+            log_update(result) 
             return jsonify({'result': [result]})
 
     return redirect(url_for('battlefield', character_id=character_id))
@@ -1329,5 +1335,10 @@ def commandlist(character_id):
     ]
     return render_template('commandlist.html', commands=commands, character=character)
 
+# SocketIOイベントのハンドラを追加
+@socketio.on('connect')
+def handle_connect():
+    print('Client connected')
+
 if __name__ == "__main__":
-    app.run(port=8000, host="0.0.0.0", debug=True)
+    socketio.run(port=8000, host="0.0.0.0", debug=True)
