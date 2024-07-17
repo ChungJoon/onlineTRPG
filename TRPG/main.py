@@ -5,6 +5,7 @@ from flask_cors import CORS
 from jinja2 import Template
 from flask_socketio import SocketIO
 
+
 db = SQLAlchemy()
 
 app = Flask(__name__)
@@ -30,6 +31,7 @@ app.jinja_env.filters['getattr'] = getattr_filter
 
 # コマンドのログを保存するリスト
 command_logs = []
+battle_log = []
 
 # 武器種のリストを定義
 WEAPON_CATEGORIES = [
@@ -47,23 +49,33 @@ EnemyBackUnits = []
 
 @app.route('/', methods=['GET', 'POST'])
 def login():
-    from dataclass import User
+    from dataclass import User,GameLog
     if request.method == 'POST':
-        user_name = str(request.form['id'])
-        password = str(request.form['pwd'])
+        user_name = request.form['id']
+        password = request.form['pwd']
         action = request.form.get('action')  # クリックされたボタンのvalueを取得
 
         if action == 'login':
             # データベースからユーザーを検索
             user = User.query.filter_by(name=user_name).first()
-
             if user and user.check_password(password):
+                flash('ログイン成功')
                 session['username'] = user.name
                 # return profile(user.id)
                 return redirect(url_for('profile', character_id=user.id))
             else:
-                return render_template('login.html', message="IDまたはパスワードが正しくありません。")
+                flash('ユーザーIDまたはパスワードが間違っています')
+                return render_template('login.html')
+        elif action == 'register':
 
+            user = User.query.filter_by(name=user_name).first()
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
+
+            flash('ユーザー登録が完了しました')
+            return redirect(url_for('login'))
+        
     return render_template('login.html')
 
 @app.route('/login/<int:character_id>', methods=['GET', 'POST'])
@@ -71,8 +83,8 @@ def login2(character_id):
     from dataclass import User,Character
     character = Character.query.get_or_404(character_id)
     if request.method == 'POST':
-        user_name = str(request.form['id'])
-        password = str(request.form['pwd'])
+        user_name = request.form['id']
+        password = request.form['pwd']
         action = request.form.get('action')  # クリックされたボタンのvalueを取得
 
         if action == 'login':
@@ -84,7 +96,14 @@ def login2(character_id):
                 # return profile(user.id)
                 return redirect(url_for('profile', character_id=user.id))
             else:
-                return render_template('login2.html', message="IDまたはパスワードが正しくありません。")
+                return render_template('login2.html')
+        
+        elif action == 'register':
+
+            user = User.query.filter_by(name=user_name).first()
+            user.set_password(password)
+            db.session.add(user)
+            db.session.commit()
 
     return render_template('login2.html',character=character)
 
@@ -172,19 +191,19 @@ def profile(character_id):
                            skills_other=skills_other,UsableMagics=UsableMagics,
                            BattleSkills=BattleSkills,OtherSkills=OtherSkills)
 
-battle_log=[]
-
 def log_update(message):
     socketio.emit('log_update', {'message': message})
 
 @app.route('/battlefield/<int:character_id>', methods=['GET', 'POST'])
 def battlefield(character_id):
+    from dataclass import Character,UserCommand,Unit,GameLog
 
-    from dataclass import Character,UserCommand,Unit
     character = Character.query.get_or_404(character_id)
     user_commands=UserCommand.query.filter_by(related_id=character.id).all()
     public_commands=UserCommand.query.filter_by(related_id=0).all()
     units = Unit.query.filter_by(active=True).all()
+    logitem = GameLog.query.filter_by(name="BattleLog").first()
+    battle_log = logitem.log.split('\n') if logitem and logitem.log else []
     
     return render_template('battlefield.html', character=character,
                             user_commands=user_commands, public_commands=public_commands,
@@ -716,8 +735,9 @@ def apply(character_id):
 # 新しいルートの追加
 @app.route("/battle_command/<int:character_id>", methods=['GET', 'POST'])
 def battle_command(character_id):
-    from dataclass import Character
+    from dataclass import Character,GameLog
     character = Character.query.get_or_404(character_id)
+    logitem = GameLog.query.filter_by(name="BattleLog").first()
     from commands import execute_code # commands.pyから関数をインポート
     if request.method == 'POST':
         code_input = request.form.get('command-input', '').strip()  # None の場合は空文字列を使用
@@ -729,6 +749,10 @@ def battle_command(character_id):
         if code_input:  # 空でない場合のみ処理を実行
             result = execute_code(code_input,actor,targets)
             battle_log.append(result)
+            log_text = '\n'.join(battle_log)
+            logitem.log = log_text
+            db.session.add(logitem)
+            db.session.commit()
             log_update(result) 
             return jsonify({'result': [result]})
 
@@ -1234,6 +1258,12 @@ def commandlist(character_id):
             'description': 'critical:クリティカル値, damage:打撃点',
             'return': 'ダメージ値',
             'details': 'モンスター用。ターゲットに対してダイス+打撃点の攻撃を行い、ダメージ値を取得する。'
+        },
+        {
+            'name': 'useitem(item_id,num)',
+            'description': 'useitem:アイテムID,num:使用する個数',
+            'return': 'コマンドのreturn値',
+            'details': 'アイテムを使用する。このときアイテムのコマンドが実行される。使用したアイテムが消耗品の場合その個数分消費する。'
         },
         {
             'name': 'challenge(bonus,targetstatus)',

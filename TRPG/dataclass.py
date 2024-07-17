@@ -16,9 +16,7 @@ class User(db.Model):
         self.password = password
 
     def check_password(self, password):
-        if self.password == password:
-            return True
-        return False
+        return self.password == password
 
     def __repr__(self):
         return f'<User {self.name}>'
@@ -80,12 +78,12 @@ class Character(db.Model):
         EquipmentMP = db.session.query(func.sum(Equipment.MP)).filter_by(related_id=self.id).scalar()
 
         # ステータスを変数として取得
-        DEX= self.Technique + self.A + self.d1 + self.e1 + EquipmentDEX
-        AGI= self.Technique + self.B + self.d2 + self.e2 + EquipmentAGI
-        STR= self.Body + self.C + self.d3 + self.e3 + EquipmentSTR
-        VIT= self.Body + self.D + self.d4 + self.e4 + EquipmentVIT
-        INT= self.Heart + self.E + self.d5 + self.e5 + EquipmentINT
-        MND= self.Heart + self.F + self.d6 + self.e6 + EquipmentMND
+        DEX= self.Technique + self.A + self.d1 + self.e1 + coalesce(EquipmentDEX)
+        AGI= self.Technique + self.B + self.d2 + self.e2 + coalesce(EquipmentAGI)
+        STR= self.Body + self.C + self.d3 + self.e3 + coalesce(EquipmentSTR)
+        VIT= self.Body + self.D + self.d4 + self.e4 + coalesce(EquipmentVIT)
+        INT= self.Heart + self.E + self.d5 + self.e5 + coalesce(EquipmentINT)
+        MND= self.Heart + self.F + self.d6 + self.e6 + coalesce(EquipmentMND)
 
         LEVEL = db.session.query(func.max(Job.level)).filter_by(related_id=self.id).scalar()
         if LEVEL is None:
@@ -412,6 +410,15 @@ class Unit(db.Model):
         self.MaxHP = myStatus.HP
         self.MaxMP = myStatus.MP
 
+        # その他ステータス初期化
+        self.クリティカルボーナス = 0
+        self.魔法クリティカル = 0
+        self.MP軽減 = 0
+        self.先制ボーナス = 0
+        self.知識ボーナス = 0
+        self.回復ボーナス = 0
+        self.魔法行使判定 = 0
+
         db.session.add(self)
         db.session.commit()
 
@@ -621,5 +628,15 @@ class BulletBox(db.Model):
     col10 = db.Column(db.Integer, nullable=True)
 
     def __repr__(self):
-        return f'<Bullet {self.id}>'
+        return f'<BulletBox {self.id}>'
+    
+class GameLog(db.Model):
+    __tablename__ = 'GameLog'
+    
+    name = db.Column(db.String(45), primary_key=True)
+    date = db.Column(db.Date)
+    log = db.Column(db.Text)
+
+    def __repr__(self):
+        return f'<GameLog {self.name}>'
 

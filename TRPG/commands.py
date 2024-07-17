@@ -12,7 +12,7 @@ Targets = []
 
 def execute_code(code,actor,targets):
     global Actor,Targets,variables
-    results = [actor,code,">>> "]
+    results = [f'<<< {actor}:{code} >>>']
     commands = code.split(';')
     variables = {}
     Actor = actor
@@ -40,7 +40,7 @@ def process_command(command_input):
         command = replace_variables(command)
         log_message, output_value = execute_single_command(command)
         variables[variable_name] = output_value  # 変数に値を格納
-        return f"{log_message} {variable_name} に値を代入しました。", output_value
+        return f"{log_message} > {variable_name} に値を代入しました。", output_value
     else:
         if "loop" in command_input:
             command = command_input
@@ -117,6 +117,8 @@ def execute_single_command(command):
     shoot_attack_command_pattern = r'^shoot_attack\((\d+),(\d+)\)$'
     # magishoot_attack(x,y) コマンドを処理する
     magishoot_attack_command_pattern = r'^magishoot_attack\((\d+),(\d+),(\d+)\)$'
+    # useitem(x,y) コマンドを処理する
+    useitem_command_pattern = r'^useitem\((\d+),(\d+)\)$'
 
     match = re.match(power_command_pattern, command)
     if match:
@@ -232,6 +234,10 @@ def execute_single_command(command):
     if match:
         return shoot_attack(match.group(1),match.group(2))
     
+    match = re.match(useitem_command_pattern, command)
+    if match:
+        return useitem(match.group(1),match.group(2))
+    
     else:
         log_message = "サポートされていないコマンドです。"
         return log_message, None
@@ -254,7 +260,6 @@ def loop(init, code, trigger):
 
 def actionif(bool, command):
     if bool == "True":
-        print("command:"+command)
         log_message,result = sub_code(command)
         return log_message,result 
     else:
@@ -345,11 +350,11 @@ def setstatus(unit_name,status_name,value):
             db.session.add(unit)
             db.session.commit()
             if unit.type == "魔物":
-                log_message = f"{unit_name}の{status_name}を {value} 変化させました"
+                log_message = f" {unit_name}の{status_name}を {value} 変化させました。"
             else:
-                log_message = f"{unit_name}の{status_name}を {value} 変化させました 現在{status_name}: {new_value}"
+                log_message = f" {unit_name}の{status_name}を {value} 変化させました。 現在{status_name}: {new_value}"
         except:
-            log_message = f"{unit_name}に'{status_name}'というステータスは存在しません"
+            log_message = f" {unit_name}に'{status_name}'というステータスは存在しません。"
             new_value = 0
         
     return log_message,new_value
@@ -359,14 +364,14 @@ def getweapon(weapon_id,status_name):
     weapon = Weapon.query.filter_by(id=weapon_id).first()
 
     if weapon is None:
-        log_message = f"ID{weapon_id}の武器が存在しません"
+        log_message = f" ID{weapon_id}の武器が存在しません。"
         return log_message,None
     else:
         try:
             status_value = getattr(weapon,status_name)
-            log_message = f"{weapon.name}の{status_name}: {status_value}"
+            log_message = f" {weapon.name}の{status_name}: {status_value}"
         except:
-            log_message = f"{weapon.name}に'{status_name}'というステータスは存在しません"
+            log_message = f" {weapon.name}に'{status_name}'というステータスは存在しません。"
         
     return log_message,status_value
 
@@ -375,14 +380,14 @@ def getprotector(protetor_id,status_name):
     weapon = Protector.query.filter_by(id=protetor_id).first()
 
     if weapon is None:
-        log_message = f"ID{protetor_id}の防具が存在しません"
+        log_message = f" ID{protetor_id}の防具が存在しません。"
         return log_message,None
     else:
         try:
             status_value = getattr(weapon,status_name)
-            log_message = f"{weapon.name}の{status_name}: {status_value}"
+            log_message = f" {weapon.name}の{status_name}: {status_value}"
         except:
-            log_message = f"{weapon.name}に'{status_name}'というステータスは存在しません"
+            log_message = f" {weapon.name}に'{status_name}'というステータスは存在しません。"
         
     return log_message,status_value
 
@@ -394,16 +399,16 @@ def power(x, y):
     power_damage = PowerDamage.query.filter_by(Power=power_value).first()
     
     if not power_damage:
-        return f"Power {power_value} のレコードが見つかりません。", None
+        return f" Power {power_value} のレコードが見つかりません。", None
     
     # カラム名を動的に構築
     column_name = f"col{column_number}"
     
     if not hasattr(power_damage, column_name):
-        return f"カラム {column_number} が存在しません。", None
+        return f" カラム {column_number} が存在しません。", None
     
     column_value = getattr(power_damage, column_name)
-    log_message = f"威力 {power_value} のダメージは {column_value} です。"
+    log_message = f" 威力 {power_value} のダメージは {column_value} です。"
     return log_message, int(column_value)
 
 def monsterattack(critical, additionaldamage):
@@ -434,49 +439,49 @@ def ifeqmore(x, y):
     x = int(x)
     y = int(y)
     result = x >= y
-    log_message = f"以上: {result}"
+    log_message = f" 以上: {result}"
     return log_message, result
 
 def ifless(x, y):
     x = int(x)
     y = int(y)
     result = x < y
-    log_message = f"小さい: {result}"
+    log_message = f" 小さい: {result}"
     return log_message, result
 
 def ifeqless(x, y):
     x = int(x)
     y = int(y)
     result = x <= y
-    log_message = f"以下: {result}"
+    log_message = f" 以下: {result}"
     return log_message, result
 
 def ifequal(x, y):
     x = int(x)
     y = int(y)
     result = x == y
-    log_message = f"等しい: {result}"
+    log_message = f" 等しい: {result}"
     return log_message, result
 
 def plus(x, y):
     x = int(x)
     y = int(y)
     result = x + y
-    log_message = f"和: {result}"
+    log_message = f" 和: {result}"
     return log_message, result
 
 def minus(x, y):
     x = int(x)
     y = int(y)
     result = x - y
-    log_message = f"差: {result}"
+    log_message = f" 差: {result}"
     return log_message, result
 
 def multiply(x, y):
     x = int(x)
     y = int(y)
     result = x * y
-    log_message = f"積: {result}"
+    log_message = f" 積: {result}"
     return log_message, result
 
 def divide(x, y):
@@ -484,12 +489,12 @@ def divide(x, y):
     y = int(y)
     if y == 0:
         result = 0
-        log_message = f"0で割っています"
+        log_message = f" 0で割っています。"
     else:
         x = int(x)
         y = int(y)
         result = x // y
-        log_message = f"商: {result}"
+        log_message = f" 商: {result}"
     return log_message, result
 
 def getmax(numlist):
@@ -497,7 +502,7 @@ def getmax(numlist):
     numbers = [int(num.strip()) for num in numlist.split(',')]
     # 最大値を計算
     max_value = max(numbers)
-    log_message = f'{numbers}の最大値は{max_value}です'
+    log_message = f' {numbers}の最大値は{max_value}です。'
     return log_message, max_value
 
 def getmin(numlist):
@@ -505,7 +510,7 @@ def getmin(numlist):
     numbers = [int(num.strip()) for num in numlist.split(',')]
     # 最大値を計算
     min_value = min(numbers)
-    log_message = f'{numbers}の最小値は{min_value}です'
+    log_message = f' {numbers}の最小値は{min_value}です。'
     return log_message, min_value
 
 def getsum(numlist):
@@ -513,7 +518,7 @@ def getsum(numlist):
     numbers = [int(num.strip()) for num in numlist.split(',')]
     # 最大値を計算
     sum_value = sum(numbers)
-    log_message = f'{numbers}の合計値は{sum_value}です'
+    log_message = f' {numbers}の合計値は{sum_value}です。'
     return log_message, sum_value
 
 
@@ -524,9 +529,9 @@ def challenge_status(mystatus,targetstatus):
     myresult = message
 
     if getstatus(Actor,"type")[1] == "魔物":
-        log_message = f"{Actor}の{myresult} "
+        log_message = f" << {Actor}の{myresult} >> "
     else:
-        log_message = f"{Actor}の{myresult} 補正値:{mybonus} 判定値:{myvalue} >>"
+        log_message = f" << {Actor}の{myresult} 補正値:{mybonus} 判定値:{myvalue} >> "
     
 
     for target in Targets:
@@ -549,9 +554,9 @@ def challenge_status(mystatus,targetstatus):
         challengebool[target] = bool
 
         if getstatus(target,"type")[1] == "魔物":
-            log_message = log_message + f"{target}の{tresult},判定:{bool} "
+            log_message = log_message + f" << {target}の{tresult},判定:{bool} >> "
         else:
-            log_message = log_message + '>> ' + f"{target}の{tresult} 補正値:{targetbonus} 判定値:{tvalue} 判定:{bool} "
+            log_message = log_message + f" << {target}の{tresult} 補正値:{targetbonus} 判定値:{tvalue} 判定:{bool} >> "
             print(log_message)
     return log_message, bool, mydice
 
@@ -562,9 +567,9 @@ def challenge(bonus,targetstatus):
     myresult = message
 
     if getstatus(Actor,"type")[1] == "魔物":
-        log_message = f"{Actor}の{myresult} "
+        log_message = f" << {Actor}の{myresult} >> "
     else:
-        log_message = f"{Actor}の{myresult} 補正値:{mybonus} 判定値:{myvalue} >>"
+        log_message = f" << {Actor}の{myresult} 補正値:{mybonus} 判定値:{myvalue} >> "
     
 
     for target in Targets:
@@ -587,9 +592,9 @@ def challenge(bonus,targetstatus):
         challengebool[target] = bool
 
         if getstatus(target,"type")[1] == "魔物":
-            log_message = log_message + f"{target}の{tresult},判定:{bool} "
+            log_message = log_message + f" << {target}の{tresult},判定:{bool} >> "
         else:
-            log_message = log_message + '>> ' + f"{target}の{tresult} 補正値:{targetbonus} 判定値:{tvalue} 判定:{bool} "
+            log_message = log_message + f" << {target}の{tresult} 補正値:{targetbonus} 判定値:{tvalue} 判定:{bool} >>"
             print(log_message)
     return log_message, bool, mydice
 
@@ -608,7 +613,7 @@ def physical_attack(weapon_id):
         criticalbonus = getstatus(Actor,"クリティカルボーナス")[1]
 
         damage = int(basicdamage) + int(weapondamage)
-        log_message = f"武器威力:{weaponpower} 基本追加ダメージ:{damage} >> "
+        log_message = f"武器威力:{weaponpower} 基本追加ダメージ:{damage}"
 
         # 命中判定
         Accuracy = int(getstatus(Actor,"命中")[1]) + int(getweapon(weapon_id,"命中")[1])
@@ -620,7 +625,7 @@ def physical_attack(weapon_id):
         maindamage = int(basicdamage) + int(weapondamage) + powerdamage
         damage_value = maindamage
 
-        message = f" >> 基礎ダメージ:{powerdamage}"
+        message = f"  基礎ダメージ:{powerdamage}"
         log_message += message
 
         # クリティカル計算
@@ -633,15 +638,15 @@ def physical_attack(weapon_id):
         # ターゲットに対するダメージ計算
         for target in Targets:
             if challengebool[target] == True:
-                message = f" >> {target}に{damage_value}のダメージを与えます"
+                message = f" {target}に{damage_value}のダメージを与えます。"
                 log_message += message
 
                 defence = getstatus(target,"defence")[1]
                 actualdamage = (damage_value - defence) * (-1)
                 message, newHP = setstatus(target,"HP",actualdamage)
-                
+                log_message += message
             else:
-                message = f" >> {target}は回避しました"
+                message = f" {target}は回避しました。"
                 log_message += message
 
     except Exception as e:
@@ -652,7 +657,7 @@ def physical_attack(weapon_id):
 def magical_attack(mpower,mp,magictype):
     from dataclass import Unit,UserMagic
 
-    log_message = f"MPを{mp}消費します "
+    log_message = f" MPを{mp}消費します。"
     # MP消費
     mp = int(mp)
     mp = -mp
@@ -669,7 +674,7 @@ def magical_attack(mpower,mp,magictype):
 
     criticalbonus = 0
 
-    log_message += f" 魔法レベル:{magiclevel} 魔法威力:{mpower} 魔力:{magicpower} >> "
+    log_message += f" 魔法レベル:{magiclevel} 魔法威力:{mpower} 魔力:{magicpower}"
 
     # 抵抗判定
     message, bool, dicevalue = challenge(magicpower,"精神抵抗")
@@ -686,13 +691,13 @@ def magical_attack(mpower,mp,magictype):
     critical_line = 10 - int(criticalbonus)
     if dicevalue >= int(critical_line):
         message, cvalue = criticalloop(critical_line,mpower)
-        log_message += "クリティカル計算:" + message
+        log_message += " クリティカル計算:" + message
 
     # ターゲットに対するダメージ計算
     for target in Targets:
         if challengebool[target] == True:
             damage_value = maindamage + cvalue
-            message = f" >> {target}に{damage_value}のダメージを与えます "
+            message = f"  {target}に{damage_value}のダメージを与えます。"
             log_message += message
 
             actualdamage = (damage_value) * (-1)
@@ -701,11 +706,11 @@ def magical_attack(mpower,mp,magictype):
         else:
             if dicevalue == 2:
                 damage_value = 0
-                message = f" >> {target}への魔法は自動失敗しました "
+                message = f"  {target}への魔法は自動失敗しました。"
                 log_message = log_message + message
             else:
                 damage_value = maindamage // 2
-                message = f" >> {target}に{damage_value}の半減ダメージを与えます "
+                message = f"  {target}に{damage_value}の半減ダメージを与えます。"
                 log_message = log_message + message
 
             actualdamage = (damage_value) * (-1)
@@ -764,14 +769,14 @@ def shoot_attack(wpower,weapon_id):
     # ターゲットに対するダメージ計算
     for target in Targets:
         if challengebool[target] == True:
-            message = f" >> {target}に{damage_value}のダメージを与えます"
+            message = f"  {target}に{damage_value}のダメージを与えます。"
             log_message += message
 
             actualdamage = (damage_value) * (-1)
             message, newHP = setstatus(target,"HP",actualdamage)
             
         else:
-            message = f" >> {target}は回避しました"
+            message = f"  {target}は回避しました。"
             log_message += message
 
     return log_message, damage_value
@@ -783,13 +788,13 @@ def magishoot_attack(mpower,mp,weapon_id):
     mybox = BulletBox.query.filter_by(related_id=weapon_id).first()
 
     if mybox.col1 is None or mybox.col1 == "":
-        log_message = "不発！弾がありません"
+        log_message = "不発！弾がありません。"
         damage_value = 0
         return log_message, damage_value
 
     mybullet = Bullet.query.filter_by(id=mybox.col1).first()
     if mybullet is None:
-        log_message = "不発！弾がありません"
+        log_message = "不発！弾がありません。"
         damage_value = 0
         return log_message, damage_value
 
@@ -806,7 +811,7 @@ def magishoot_attack(mpower,mp,weapon_id):
 
     # MP消費
     mp = int(mp) + int(bulletmp)
-    log_message = f"MPを{mp}消費します "
+    log_message = f" MPを{mp}消費します。"
     mp = -mp
 
     message, newMP = setstatus(Actor,"MP",mp)
@@ -821,7 +826,7 @@ def magishoot_attack(mpower,mp,weapon_id):
 
     criticalbonus = 0
 
-    log_message += f" 魔動機術レベル:{magiclevel} 威力:{mpower} 魔力:{magicpower} >> "
+    log_message += f" 魔動機術レベル:{magiclevel} 威力:{mpower} 魔力:{magicpower}"
 
     mybox = usebullet(mybox)
 
@@ -847,14 +852,14 @@ def magishoot_attack(mpower,mp,weapon_id):
     # ターゲットに対するダメージ計算
     for target in Targets:
         if challengebool[target] == True:
-            message = f" >> {target}に{damage_value}のダメージを与えます"
+            message = f"  {target}に{damage_value}のダメージを与えます。"
             log_message += message
 
             actualdamage = (damage_value) * (-1)
             message, newHP = setstatus(target,"HP",actualdamage)
             
         else:
-            message = f" >> {target}は回避しました"
+            message = f"  {target}は回避しました。"
             log_message += message
 
     return log_message, damage_value
@@ -893,6 +898,28 @@ def monstercriticalloop(critical):
         return log_message, bonus
 
 
+def useitem(item_id,num):
+    from dataclass import Item
+    item = Item.query.filter_by(id=item_id).first()
+    if not item is None:
+        log_message = f'{item.name}を{num}個使用しました。'
+        result=0
+        item_num = int(item.num) 
+        for i in range(int(num)):
+            command = item.command
+            message,result = sub_code(command)
+            log_message += message
+            if item.type == "消耗品":
+                item_num -= 1
+            
+        item.num = item_num
+        db.session.add(item)
+        db.session.commit()
+    else:
+        log_message = "アイテムが見つかりません。"
+        result = 0
+    
+    return log_message,result
 
 
 

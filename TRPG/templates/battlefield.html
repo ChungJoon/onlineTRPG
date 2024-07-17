@@ -272,9 +272,9 @@
         <div id="command-result" class="bg-gray-800 p-4 rounded shadow-md">
             <h2 class="text-2xl font-bold text-yellow-300 mb-2">コマンド結果</h2>
             <div id="result-output" class="text-white">
-	            {% for log in battle_log %}
+            {% for log in battle_log %}
 	            <p> {{ log }}</p>
-	            {% endfor %}
+	        {% endfor %}
             </div>
         </div>
         
@@ -284,8 +284,8 @@
 		            <h2 id="modal-title" class="text-2xl mb-4">ユニット詳細</h2>
 		            <p id="modal-content">ユニットの情報がここに表示されます。</p>
 		            {% for unit in units %}
-                            <div>{{ unit.name }}</div>
-                        {% endfor %}
+                        <div>{{ unit.name }}</div>
+                    {% endfor %}
 		            <button id="close-modal" class="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">閉じる</button>
 		        </div>
 		    </div>
@@ -701,7 +701,7 @@
                 data.result.forEach(message => {
                     const messageElement = document.createElement('p');
                     messageElement.textContent = message;
-                    resultOutput.appendChild(messageElement);
+                    //resultOutput.appendChild(messageElement);
                 });
                 
                 // スクロールエリアを一番下までスクロール
