@@ -93,6 +93,9 @@ class Character(db.Model):
         if MP is None:
             MP = 0
         MP = MP * 3 + MND +1
+        WizardMP = db.session.query(func.sum(Job.level)).filter_by(related_id=self.id,name="ウィザード").scalar() 
+        WizardMP = coalesce(WizardMP)
+        MP -= WizardMP * 3
         
         MAG = db.session.query(func.max(Job.level)).filter_by(related_id=self.id,type="魔法").scalar()
         if MAG is None:
@@ -329,6 +332,7 @@ class Unit(db.Model):
     弱点 = db.Column(db.String(45), nullable=True)
     基本ダメージ = db.Column(db.Integer, default=0)
     MP軽減 = db.Column(db.Integer, default=0)
+    MP消費カット = db.Column(db.Integer, default=0)
     魔力 = db.Column(db.Integer, default=0)
     type = db.Column(db.String(45), nullable=True)
     active = db.Column(db.Boolean, nullable=True)
@@ -347,6 +351,7 @@ class Unit(db.Model):
     知識ボーナス = db.Column(db.Integer, default=0, nullable=True)
     回復ボーナス = db.Column(db.Integer, default=0, nullable=True)
     魔法行使判定 = db.Column(db.Integer, default=0, nullable=True)
+    魔法耐性 = db.Column(db.Integer, default=0, nullable=True)
 
     def __repr__(self):
         return f"Unit(id={self.id}, name='{self.name}')"
@@ -386,7 +391,7 @@ class Unit(db.Model):
         # 防護点補正
         ProtectorDefense = db.session.query(func.sum(Protector.防護点)).filter_by(related_id=self.related_id).scalar()
         ProtectorDefense = coalesce(ProtectorDefense)
-        self.防御 = ProtectorDefense
+        self.防護点 = ProtectorDefense
 
         # 魔力補正
         if magiclevel is None:
@@ -418,6 +423,8 @@ class Unit(db.Model):
         self.知識ボーナス = 0
         self.回復ボーナス = 0
         self.魔法行使判定 = 0
+        self.MP消費カット = 0
+        self.魔法耐性 = 0
 
         db.session.add(self)
         db.session.commit()
@@ -440,6 +447,10 @@ class Unit(db.Model):
         for equipment in myequipments:
             if not equipment.command is None:
                 result = execute_code(equipment.command,self.name,[])
+
+        self.MP消費カット = self.MP軽減
+        db.session.add(self)
+        db.session.commit()
 
         return self
 
@@ -492,6 +503,7 @@ class SubCharacterPart(db.Model):
     damage = db.Column(db.Integer, default=0)
     magic_power = db.Column(db.Integer, default=0)
     partnumber = db.Column(db.Integer, default=0)
+    MagicDefence = db.Column(db.Integer, default=0)
 
     def __repr__(self):
         return f"SubCharacterPart(id={self.id}, name='{self.name}')"

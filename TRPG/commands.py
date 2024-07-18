@@ -119,6 +119,8 @@ def execute_single_command(command):
     magishoot_attack_command_pattern = r'^magishoot_attack\((\d+),(\d+),(\d+)\)$'
     # useitem(x,y) コマンドを処理する
     useitem_command_pattern = r'^useitem\((\d+),(\d+)\)$'
+    # heal(キャラクター名, ステータス名) コマンドの正規表現パターン
+    heal_command_pattern = r'^heal\(([^,]+),\s*([^,]+)\)$'
 
     match = re.match(power_command_pattern, command)
     if match:
@@ -238,6 +240,10 @@ def execute_single_command(command):
     if match:
         return useitem(match.group(1),match.group(2))
     
+    match = re.match(heal_command_pattern, command)
+    if match:
+        return heal(match.group(1),match.group(2))
+    
     else:
         log_message = "サポートされていないコマンドです。"
         return log_message, None
@@ -340,7 +346,7 @@ def setstatus(unit_name,status_name,value):
             if status_name == "MP":
                 mpcover = unit.MP軽減
                 value = int(value) + int(mpcover)
-                unit.MP軽減 = 0
+                unit.MP軽減 = unit.MP消費カット
                 if value > 0:
                     value = 0
 
@@ -641,8 +647,10 @@ def physical_attack(weapon_id):
                 message = f" {target}に{damage_value}のダメージを与えます。"
                 log_message += message
 
-                defence = getstatus(target,"defence")[1]
+                defence = getstatus(target,"防護点")[1]
                 actualdamage = (damage_value - defence) * (-1)
+                if actualdamage > 0:
+                    actualdamage = 0
                 message, newHP = setstatus(target,"HP",actualdamage)
                 log_message += message
             else:
@@ -695,12 +703,14 @@ def magical_attack(mpower,mp,magictype):
 
     # ターゲットに対するダメージ計算
     for target in Targets:
+        defence = getstatus(target,"魔法耐性")[1]
         if challengebool[target] == True:
             damage_value = maindamage + cvalue
             message = f"  {target}に{damage_value}のダメージを与えます。"
             log_message += message
-
-            actualdamage = (damage_value) * (-1)
+            actualdamage = (damage_value - defence) * (-1)
+            if actualdamage > 0:
+                actualdamage = 0
             message, newHP = setstatus(target,"HP",actualdamage)
             
         else:
@@ -713,9 +723,11 @@ def magical_attack(mpower,mp,magictype):
                 message = f"  {target}に{damage_value}の半減ダメージを与えます。"
                 log_message = log_message + message
 
-            actualdamage = (damage_value) * (-1)
-            message, newHP = setstatus(target,"HP",actualdamage)
-            log_message += message
+                actualdamage = (damage_value - defence) * (-1)
+                if actualdamage > 0:
+                    actualdamage = 0
+                message, newHP = setstatus(target,"HP",actualdamage)
+                log_message += message
 
     return log_message, damage_value
 
@@ -922,7 +934,39 @@ def useitem(item_id,num):
     return log_message,result
 
 
+def heal(unit_name,value):
+    if unit_name == "target":
+        log_message = ""
+        for target in Targets:
+            message,status_value=heal(target,value)
+            log_message = log_message + message
 
+        return log_message,status_value
+
+    from dataclass import Unit
+    unit = Unit.query.filter_by(name=unit_name).first()
+    status_value = 0
+
+    if unit is None:
+        log_message = "ユニットが存在しません"
+        return log_message,None
+    else:
+        try:
+            status_value = getattr(unit,"HP")
+            healbonus = unit.回復ボーナス
+            healvalue = int(value) + int(healbonus)
+            status_value = status_value + healvalue
+            setattr(unit,"HP",status_value)
+            db.session.add(unit)
+            db.session.commit()
+            log_message = f"{healvalue}の回復を行います。{unit_name}のHP: {status_value}"
+        except:
+            status_value = 0
+            log_message = f"{unit_name}にHPというステータスは存在しません"
+        if unit.type == "魔物":
+            log_message = f"魔物のステータスは参照できません。"
+        
+    return log_message,status_value
 
 
 

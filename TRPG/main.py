@@ -31,7 +31,6 @@ app.jinja_env.filters['getattr'] = getattr_filter
 
 # コマンドのログを保存するリスト
 command_logs = []
-battle_log = []
 
 # 武器種のリストを定義
 WEAPON_CATEGORIES = [
@@ -290,6 +289,7 @@ def create_subcharacter(character_id):
                             Accuracy = request.form.get(f'{partkey}Accuracy'),
                             Evasion = request.form.get(f'{partkey}Evasion'),
                             Defence = request.form.get(f'{partkey}Defence'),
+                            MagicDefence = request.form.get(f'{partkey}MagicDefence'),
                             Quickness = request.form.get(f'{partkey}Require_Quickness'),
                             Knowledge = request.form.get(f'{partkey}Knowledge'),
                             Require_knowledge = request.form.get(f'{partkey}Require_knowledge'),
@@ -355,6 +355,7 @@ def edit_subcharacter(character_id,subcharacter_id):
                                 Accuracy = request.form.get(f'{partkey}Accuracy'),
                                 Evasion = request.form.get(f'{partkey}Evasion'),
                                 Defence = request.form.get(f'{partkey}Defence'),
+                                MagicDefence = request.form.get(f'{partkey}MagicDefence'),
                                 Quickness = request.form.get(f'{partkey}Require_Quickness'),
                                 Knowledge = request.form.get(f'{partkey}Knowledge'),
                                 Require_knowledge = request.form.get(f'{partkey}Require_knowledge'),
@@ -380,6 +381,7 @@ def edit_subcharacter(character_id,subcharacter_id):
                             subpart.Accuracy = request.form.get(f'{partkey}Accuracy'),
                             subpart.Evasion = request.form.get(f'{partkey}Evasion'),
                             subpart.Defence = request.form.get(f'{partkey}Defence'),
+                            subpart.MagicDefence = request.form.get(f'{partkey}MagicDefence'),
                             subpart.Quickness = request.form.get(f'{partkey}Require_Quickness'),
                             subpart.Knowledge = request.form.get(f'{partkey}Knowledge'),
                             subpart.Require_knowledge = request.form.get(f'{partkey}Require_knowledge'),
@@ -748,6 +750,7 @@ def battle_command(character_id):
 
         if code_input:  # 空でない場合のみ処理を実行
             result = execute_code(code_input,actor,targets)
+            battle_log = logitem.log.split('\n') if logitem and logitem.log else []
             battle_log.append(result)
             log_text = '\n'.join(battle_log)
             logitem.log = log_text
@@ -910,6 +913,7 @@ def creare_unit(character_id, subcharacter_id):
             命中 = part.Accuracy,
             回避 = part.Evasion,
             防護点 = part.Defence,
+            魔法耐性 = part.MagicDefence,
             先制力 = part.Quickness,
             魔物知識 = part.Knowledge,
             魔物知識要求値 = part.Require_knowledge,
@@ -918,7 +922,7 @@ def creare_unit(character_id, subcharacter_id):
             詳細 = part.detail,
             弱点 = part.weakpoint,
             基本ダメージ = part.damage,
-            magic_power = part.magic_power,
+            魔力 = part.magic_power,
             type = subcharacter.type,
             active = True
         )
@@ -978,6 +982,7 @@ def edit_unit(character_id,unit_id):
             unit.命中 = request.form[f'accuracy-{unit_id}']
             unit.回避 = request.form[f'evasion-{unit_id}']
             unit.防護点 = request.form[f'defence-{unit_id}']
+            unit.魔法耐性 = request.form[f'magicdefence-{unit_id}']
             unit.精神抵抗 = request.form[f'MND-{unit_id}']
             unit.生命抵抗 = request.form[f'VID-{unit_id}']
             unit.魔物知識 = request.form[f'knowledge-{unit_id}']
@@ -1264,6 +1269,12 @@ def commandlist(character_id):
             'description': 'useitem:アイテムID,num:使用する個数',
             'return': 'コマンドのreturn値',
             'details': 'アイテムを使用する。このときアイテムのコマンドが実行される。使用したアイテムが消耗品の場合その個数分消費する。'
+        },
+        {
+            'name': 'heal(unit_name,value)',
+            'description': 'unit_name:ユニットの名前,value:回復量',
+            'return': '回復後のHP',
+            'details': '特定のユニットに対して回復を行う。'
         },
         {
             'name': 'challenge(bonus,targetstatus)',

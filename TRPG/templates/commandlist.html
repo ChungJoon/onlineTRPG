@@ -7,14 +7,36 @@ Command Execution
 {% block content %}
 <!-- コマンドテストセクション -->
 <div class="container mx-auto p-4 text-gray-300">
-    <h1 class="text-4xl font-bold mb-4 text-yellow-400">コマンド一覧</h1>
+	<h1 class="text-4xl font-bold mb-4 text-yellow-400">コマンドについて</h1>
+	<div class="text-lg mb-2">
+		<p> バトル中の操作は基本的にコマンドで行います。</p>
+		<p> コマンドは下にあるコマンド名に加えてカッコ内に引数を入れて使用します。（コマンドというより関数です）</p>
+		<p class="text-yellow-400"> 例 ダイスを振る：dice(2,6)</p>
+		<p class="text-yellow-400"> 例 アデルのMPを3減らす：setstatus(アデル,MP,-3)</p>
+		<p> コマンドは複数個つなげることができます。コマンドとコマンドの間には ; を入れてください。</p>
+		<p> また 変数=コマンド の形にすることでコマンドの結果を変数としてほかのコマンドに格納できます。</p>
+		<p> 変数を使うときは$を変数の前につけてください。</p>
+		<p class="text-yellow-400"> 例 ダイスを振って威力３０のダメージを取得する：a=dice(2,6); power(30,$a)</p>
+		<p class="text-yellow-400"> 例 ダイスを振って10以上ならもう一度ダイスを振る：a=dice(2,6); b=ifeqmore($a,10); actionif($b,dice(2,6))</p>
+		<p> 特殊な変数として $self と $target があります。</p>
+		<p> これらはそれぞれバトル画面にある行動者とターゲットとして選ばれているユニットを取得します。</p>
+		<p> ターゲットに複数のユニットが選ばれている場合それらのユニットにたいしてまとめてコマンドを実行します。</p>
+		<p class="text-yellow-400"> 例 自身のHPを20回復する：heal($self,20)</p>
+		<p class="text-yellow-400"> 例 敵の回避を取得する：getstatus($target,回避)</p>
+		<p> 敵に攻撃するなどの必ずターゲットを必要とする一部のコマンドは$targetの引数は省略されています。</p>
+		<p> これらのコマンドはバトル画面でターゲットに選択されているユニットに対して実行されます。</p>
+		<p class="text-yellow-400"> 例 id:1の武器を使用してブチル攻撃：physical_attack(1)</p>
+		<p class="text-yellow-400"> 例 威力30 消費MP6の真語魔法攻撃：magical_attack(30,6,真語魔法)</p>
+	</div>
+	
+    <h1 class="text-4xl font-bold mt-4 mb-4 text-yellow-400">コマンド一覧</h1>
     <ul class="space-y-2">
         {% for command in commands %}
         <li class="bg-gray-800 p-4 rounded shadow-md">
             <h2 class="text-2xl font-semibold text-yellow-400 mb-2">{{ command.name }}</h2>
             <p class="text-lg mb-2"><span class="font-bold text-yellow-400">引数:</span> {{ command.description }}</p>
             <p class="text-lg mb-2"><span class="font-bold text-yellow-400">返り値:</span> {{ command.return }}</p>
-            <p class="text-lg"><span class="font-bold text-yellow-400">詳細:</span> {{ command.details }}</p>
+            <p class="text-lg mb-2"><span class="font-bold text-yellow-400">詳細:</span> {{ command.details }}</p>
         </li>
         {% endfor %}
     </ul>
