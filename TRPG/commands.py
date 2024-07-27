@@ -121,6 +121,8 @@ def execute_single_command(command):
     useitem_command_pattern = r'^useitem\((\d+),(\d+)\)$'
     # heal(キャラクター名, ステータス名) コマンドの正規表現パターン
     heal_command_pattern = r'^heal\(([^,]+),\s*([^,]+)\)$'
+    # getjoblevel(キャラクター名, ステータス名) コマンドの正規表現パターン
+    getjoblevel_command_pattern = r'^getjoblevel_command_pattern\(([^,]+),\s*([^,]+)\)$'
 
     match = re.match(power_command_pattern, command)
     if match:
@@ -337,18 +339,22 @@ def setstatus(unit_name,status_name,value):
         return log_message,status_value
 
     unit = Unit.query.filter_by(name=unit_name).first()
+    value = int(value)
+    
     if unit is None:
         log_message = "ユニットが存在しません"
         return log_message,None
+    
     else:
         try:
-             # MP軽減ありの時計算
+            # MP軽減ありの時計算
             if status_name == "MP":
-                mpcover = unit.MP軽減
-                value = int(value) + int(mpcover)
-                unit.MP軽減 = unit.MP消費カット
-                if value > 0:
-                    value = 0
+                if value < 0:
+                    mpcover = unit.MP軽減
+                    value = int(value) + int(mpcover)
+                    unit.MP軽減 = unit.MP消費カット
+                    if value > 0:
+                        value = 0
 
             status_value = getattr(unit,status_name)
             new_value = status_value + int(value)
