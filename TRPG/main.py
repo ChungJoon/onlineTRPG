@@ -242,7 +242,7 @@ def unitformation():
 def subcharacter(character_id):
     from dataclass import Character,SubCharacter
     character = Character.query.get_or_404(character_id)
-    subcharacters=SubCharacter.query.filter_by(related_id=character_id,type="CPU").all()
+    subcharacters=SubCharacter.query.filter_by(type="CPU").all()
     monsters=SubCharacter.query.filter_by(related_id=character_id,type="魔物").all()
 
     if request.method == 'POST':
@@ -867,23 +867,27 @@ def unit(character_id):
     from dataclass import Character, Unit, SubCharacter
     character = Character.query.get_or_404(character_id)
     palyer_units = Unit.query.filter_by(type="player").all()
-    subcharacters = SubCharacter.query.filter_by(related_id=character_id).all()
+    monsters = SubCharacter.query.filter_by(related_id=character_id).all()
+    cpucharacters = SubCharacter.query.filter_by(type="CPU").all()
 
     monster_units=[]
     cpu_units=[]
 
-    for subcharacter in subcharacters:    
+    for subcharacter in monsters:    
         from dataclass import SubCharacterPart
         parts = SubCharacterPart.query.filter_by(related_id=subcharacter.id).all()
 
         for part in parts:
             monster_unit = Unit.query.filter_by(related_id=part.id, type="魔物").all()
-            cpu_unit = Unit.query.filter_by(related_id=part.id, type="CPU").all()
-
             for unit in monster_unit:
                 if unit.active == True:
                     monster_units.append(unit)
-            
+
+    for subcharacter in cpucharacters:   
+        from dataclass import SubCharacterPart
+        parts = SubCharacterPart.query.filter_by(related_id=subcharacter.id).all()
+        for part in parts:
+            cpu_unit = Unit.query.filter_by(related_id=part.id, type="CPU").all()
             for unit in cpu_unit:
                 if unit.active == True:
                     cpu_units.append(unit)
@@ -1372,6 +1376,30 @@ def commandlist(character_id):
             'description': 'trigger:ループに突入するか判断するreturnがTrue/Falseのコマンド,action:任意のコマンド,bool:ループ継続するか判断するreturnがTrue/Falseのコマンド',
             'return': 'コマンドのreturn値',
             'details': '判定がTureの限り繰り返し実行する。無限ループ防止のため上下２０回'
+        },
+        {
+            'name': 'challenge(bonus,targetstatus)',
+            'description': 'bonus:自分側の補正値,targetstatus:相手が参照するステータス',
+            'return': 'True/False',
+            'details': '相手への挑戦（命中や魔法など）'
+        },
+        {
+            'name': 'challenge_status(mystatus,targetstatus)',
+            'description': 'mystatus:自分が参照するステータス値,targetstatus:相手が参照するステータス',
+            'return': 'True/False',
+            'details': 'お互いのステータスを参照して挑戦（命中や魔法など）'
+        },
+        {
+            'name': 'getjoblevel(unit_name,jobname)',
+            'description': 'unit_name:ユニット名,jobname:技能名',
+            'return': '技能レベル',
+            'details': '技能レベルを取得する'
+        },
+        {
+            'name': 'fixattack(type,value)',
+            'description': 'type:攻撃タイプ（魔法か物理）,value:固定ダメージ値',
+            'return': 'ダメージ値',
+            'details': '魔法か物理の固定ダメージを与える。ダメージ値は基本ダメージの値'
         },
         # 他のコマンドを追加
     ]

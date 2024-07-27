@@ -122,7 +122,9 @@ def execute_single_command(command):
     # heal(キャラクター名, ステータス名) コマンドの正規表現パターン
     heal_command_pattern = r'^heal\(([^,]+),\s*([^,]+)\)$'
     # getjoblevel(キャラクター名, ステータス名) コマンドの正規表現パターン
-    getjoblevel_command_pattern = r'^getjoblevel_command_pattern\(([^,]+),\s*([^,]+)\)$'
+    getjoblevel_command_pattern = r'^getjoblevel\(([^,]+),\s*([^,]+)\)$'
+    # fixattack(攻撃タイプ, ダメージ量) コマンドの正規表現パターン
+    fixattack_command_pattern = r'^fixattack\(([^,]+),\s*([^,]+)\)$'
 
     match = re.match(power_command_pattern, command)
     if match:
@@ -135,6 +137,10 @@ def execute_single_command(command):
     match = re.match(attack_command_pattern, command)
     if match:
         return monsterattack(match.group(1), match.group(2))   
+    
+    match = re.match(fixattack_command_pattern, command)
+    if match:
+        return fixattack(match.group(1), match.group(2))  
     
     match = re.match(ifmore_command_pattern, command)
     if match:
@@ -246,6 +252,10 @@ def execute_single_command(command):
     if match:
         return heal(match.group(1),match.group(2))
     
+    match = re.match(getjoblevel_command_pattern, command)
+    if match:
+        return getjoblevel(match.group(1),match.group(2))
+    
     else:
         log_message = "サポートされていないコマンドです。"
         return log_message, None
@@ -340,7 +350,7 @@ def setstatus(unit_name,status_name,value):
 
     unit = Unit.query.filter_by(name=unit_name).first()
     value = int(value)
-    
+
     if unit is None:
         log_message = "ユニットが存在しません"
         return log_message,None
@@ -426,10 +436,11 @@ def power(x, y):
 def monsterattack(critical, additionaldamage):
     log_message, dice_value = dice(2, 6)
     maindamage = dice_value + int(additionaldamage)
+    damage_value = maindamage
     critical_value = int(critical)
 
     # 命中判定
-    message, bool, dicevalue = challenge("命中","回避")
+    message, bool, dicevalue = challenge_status("命中","回避")
     log_message += message
 
     # クリティカル計算
@@ -438,6 +449,78 @@ def monsterattack(critical, additionaldamage):
         message, cvalue = monstercriticalloop(critical_line)
         damage_value = maindamage + cvalue
         log_message = log_message + "クリティカル計算:" + message
+    
+    # ターゲットに対するダメージ計算
+    for target in Targets:
+        if challengebool[target] == True:
+            message = f" {target}に{damage_value}のダメージを与えます。"
+            log_message += message
+
+            defence = getstatus(target,"防護点")[1]
+            actualdamage = (damage_value - defence) * (-1)
+            if actualdamage > 0:
+                actualdamage = 0
+            message, newHP = setstatus(target,"HP",actualdamage)
+        else:
+            message = f" {target}は回避しました。"
+            log_message += message
+
+    return log_message, damage_value
+
+def fixattack(type,value):
+    log_message  = f" ダメージ固定攻撃。"
+    # 命中判定
+    if type == "物理":
+        Accuracy = int(getstatus(Actor,"命中")[1])
+        message, bool, dicevalue = challenge(Accuracy,"回避")
+    elif type == "魔法":
+        magicchallenge = int(getstatus(Actor,"魔力")[1])
+        message, bool, dicevalue = challenge(magicchallenge,"精神抵抗")
+    else:
+        log_message = "タイプは物理か魔法です。"
+        damage_value = 0
+        return log_message, damage_value
+    
+    log_message += message
+
+    damage_value = int(value)
+    maindamage = damage_value
+    # ターゲットに対するダメージ計算
+    for target in Targets:
+        if type == "物理":
+            defence = getstatus(target,"防護点")[1]
+        elif type == "魔法":
+            defence = getstatus(target,"魔法耐性")[1]
+
+        if challengebool[target] == True:
+            damage_value = maindamage
+            defence = int(defence)
+            message = f" {target}に{damage_value}のダメージを与えます。"
+            log_message += message
+            actualdamage = (damage_value - defence) * (-1)
+            if actualdamage > 0:
+                actualdamage = 0
+            message, newHP = setstatus(target,"HP",actualdamage)
+            
+        else:
+            if dicevalue == 2:
+                damage_value = 0
+                message = f"  {target}への攻撃は自動失敗しました。"
+                log_message = log_message + message
+            else:
+                if type == "物理":
+                    damage_value = maindamage // 2
+                    message = f" {target}は回避しました。"
+                    log_message = log_message + message
+                elif type == "魔法":
+                    damage_value = maindamage // 2
+                    message = f" {target}は抵抗しました。"
+                    log_message = log_message + message
+                    actualdamage = (damage_value - defence) * (-1)
+                    if actualdamage > 0:
+                        actualdamage = 0
+                    message, newHP = setstatus(target,"HP",actualdamage)
+
     return log_message, damage_value
 
 def ifmore(x, y):
@@ -658,7 +741,6 @@ def physical_attack(weapon_id):
                 if actualdamage > 0:
                     actualdamage = 0
                 message, newHP = setstatus(target,"HP",actualdamage)
-                log_message += message
             else:
                 message = f" {target}は回避しました。"
                 log_message += message
@@ -734,7 +816,6 @@ def magical_attack(mpower,mp,magictype):
                 if actualdamage > 0:
                     actualdamage = 0
                 message, newHP = setstatus(target,"HP",actualdamage)
-                log_message += message
 
     return log_message, damage_value
 
@@ -978,6 +1059,32 @@ def heal(unit_name,value):
             log_message = f"魔物のステータスは参照できません。"
         
     return log_message,status_value
+
+def getjoblevel(unit_name,jobname):
+    log_message = ""
+    if unit_name == "target":
+        for target in Targets:
+            message,joblevel=getjoblevel(target,jobname)
+            log_message += message
+
+        return log_message,joblevel
+
+    from dataclass import Unit,Job
+    unit = Unit.query.filter_by(name=unit_name).first()
+
+    if unit is None:
+        log_message = "ユニットが存在しません"
+        return log_message,None
+    else:
+        job = Job.query.filter_by(related_id=unit.related_id,name=jobname).first()
+        if job is None:
+            log_message = f'{jobname}は習得していません。'
+            return log_message, None
+        
+        joblevel = job.level
+        log_message = f'{unit_name}の{jobname}レベルは{joblevel}です。'
+        
+    return log_message,joblevel
 
 
 
