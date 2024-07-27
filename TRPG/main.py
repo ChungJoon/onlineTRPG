@@ -405,6 +405,7 @@ def edit_subcharacter(character_id,subcharacter_id):
                 subcharacter.name = request.form.get('name')
                 subcharacter.Level = request.form.get('Level')
                 subcharacter.type = request.form.get('type')
+                subcharacter.detail = request.form.get('detail')
 
                 db.session.add(subcharacter)
                 db.session.commit()

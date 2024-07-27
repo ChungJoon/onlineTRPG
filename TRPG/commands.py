@@ -685,7 +685,8 @@ def magical_attack(mpower,mp,magictype):
     log_message += f" 魔法レベル:{magiclevel} 魔法威力:{mpower} 魔力:{magicpower}"
 
     # 抵抗判定
-    message, bool, dicevalue = challenge(magicpower,"精神抵抗")
+    magicchallenge = magicpower + int(unit.魔法行使判定)
+    message, bool, dicevalue = challenge(magicchallenge,"精神抵抗")
     log_message += message
 
     # ダメージ結果
@@ -841,7 +842,10 @@ def magishoot_attack(mpower,mp,weapon_id):
     log_message += f" 魔動機術レベル:{magiclevel} 威力:{mpower} 魔力:{magicpower}"
 
     mybox = usebullet(mybox)
-
+    mybullet.個数 = int(mybullet.個数) - 1
+    db.session.add(mybullet)
+    db.session.commit()
+    
     # 命中判定
     Accuracy = int(unitaccuracy) + int(weaponaccuracy) + int(bulletacr)
     message, bool, dicevalue = challenge(Accuracy,"回避")
@@ -882,6 +886,7 @@ def usebullet(mybox):
         colb = f'col{i+1}'
         bid = getattr(mybox,cola)
         setattr(mybox,colb,bid)
+
         db.session.add(mybox)
         db.session.commit()
     
