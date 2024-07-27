@@ -308,7 +308,7 @@ def create_subcharacter(character_id):
                         db.session.add(new_sub)
                         db.session.commit()
 
-    return redirect(url_for('subcharacter', character_id=character.id))
+    return render_template('create_subcharacter.html', character=character)
 
 @app.route('/open_edit_subcharacter/<int:character_id>/<int:subcharacter_id>', methods=['GET', 'POST'])
 def open_edit_subcharacter(character_id,subcharacter_id):

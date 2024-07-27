@@ -370,14 +370,14 @@ class Unit(db.Model):
         self.MND = myStatus.精神力ボーナス 
 
         if physiclevel is None:
-            self.先制力 = 0
+            self.命中 = 0
             self.回避 = 0
             self.基本ダメージ = 0
         else:
             # 命中力補正
             ProtectorAccuracy = db.session.query(func.sum(Protector.命中)).filter_by(related_id=self.related_id).scalar()
             ProtectorAccuracy = coalesce(ProtectorAccuracy)
-            self.先制力 = physiclevel + self.DEX + ProtectorAccuracy
+            self.命中 = physiclevel + self.DEX + ProtectorAccuracy
         
             # 回避力補正
             ProtectorEvasion = db.session.query(func.sum(Protector.回避)).filter_by(related_id=self.related_id).scalar()
