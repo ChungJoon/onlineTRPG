@@ -772,7 +772,7 @@ def command(character_id):
     if request.method == 'POST':
         code_input = request.form.get('code_input', '').strip()  # None の場合は空文字列を使用
         actor =  character.label
-        target = ["テストモンスター_本体"]
+        target = ["コマンドテスト用"]
 
         if code_input:  # 空でない場合のみ処理を実行
             result = execute_code(code_input,actor,target)
@@ -980,6 +980,7 @@ def edit_unit(character_id,unit_id):
             db.session.add(unit)
             db.session.commit()
         elif action == 'set':
+            unit.name = request.form[f'name-{unit_id}']
             unit.HP = request.form[f'HP-{unit_id}']
             unit.MP = request.form[f'MP-{unit_id}']
             unit.基本ダメージ = request.form[f'damage-{unit_id}']
@@ -994,6 +995,7 @@ def edit_unit(character_id,unit_id):
             unit.先制力 = request.form[f'quickness-{unit_id}']
             unit.魔物知識要求値 = request.form[f'Require_knowledge-{unit_id}']
             unit.弱点 = request.form[f'weakpoint-{unit_id}']
+            unit.詳細 = request.form[f'detail-{unit_id}']
             db.session.add(unit)
             db.session.commit()
         elif action == 'delete':
@@ -1270,6 +1272,12 @@ def commandlist(character_id):
             'details': 'モンスター用。ターゲットに対してダイス+打撃点の攻撃を行い、ダメージ値を取得する。'
         },
         {
+            'name': 'fixattack(type,value)',
+            'description': 'type:攻撃タイプ（魔法か物理）,value:固定ダメージ値',
+            'return': 'ダメージ値',
+            'details': '魔法か物理の固定ダメージを与える。ダメージ値は基本ダメージの値'
+        },
+        {
             'name': 'useitem(item_id,num)',
             'description': 'useitem:アイテムID,num:使用する個数',
             'return': 'コマンドのreturn値',
@@ -1395,12 +1403,7 @@ def commandlist(character_id):
             'return': '技能レベル',
             'details': '技能レベルを取得する'
         },
-        {
-            'name': 'fixattack(type,value)',
-            'description': 'type:攻撃タイプ（魔法か物理）,value:固定ダメージ値',
-            'return': 'ダメージ値',
-            'details': '魔法か物理の固定ダメージを与える。ダメージ値は基本ダメージの値'
-        },
+        
         # 他のコマンドを追加
     ]
     return render_template('commandlist.html', commands=commands, character=character)

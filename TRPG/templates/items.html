@@ -289,8 +289,8 @@
                         	<div class="mr-2">
 	                            <label for="protector_type-{{ protector.id }}" class="block text-sm font-medium">種類:</label>
 	                            <select id="protector_type-{{ protector.id }}" name="protector_type-{{ protector.id }}" value="{{ protector.type }}" class="block w-16">
-					        		<option value="鎧">鎧</option>
-					        		<option value="盾">盾</option>
+					        		<option value="鎧" {% if protector.type == '鎧' %}selected{% endif %}>鎧</option>
+					        		<option value="盾" {% if protector.type == '盾' %}selected{% endif %}>盾</option>
 					    		</select>
 							</div>
                         	<div class="mr-2">
@@ -428,15 +428,15 @@
                         <div class="flex">
                         	<div class="mr-2">
 	                            <label for="item_type-{{ item.id }}" class="block text-sm font-medium">種類:</label>
-	                            <select id="item_type-{{ item.id }}" name="item_type-{{ item.id }}" value="{{ item.type }}" class="block w-full">
-					        		<option value="消耗品">消耗品</option>
-					        		<option value="永久品">永久品</option>
-					        		<option value="その他">その他</option>
+	                            <select id="item_type-{{ item.id }}" name="item_type-{{ item.id }}" class="block w-full">
+					        		<option value="消耗品" {% if item.type == '消耗品' %}selected{% endif %}>消耗品</option>
+					        		<option value="永久品" {% if item.type == '永久品' %}selected{% endif %}>永久品</option>
+					        		<option value="その他" {% if item.type == 'その他' %}selected{% endif %}>その他</option>
 					    		</select>
 							</div>
                         	<div class="mr-2">
 	                            <label for="item_num-{{ item.id }}" class="block text-sm font-medium">個数:</label>
-	                            <input type="number" id="item_num-{{ item.id }}" name="item_num-{{ item.id }}" value="{{ item.num }}" class="block w-full">
+	                            <input type="number" id="item_num-{{ item.id }}" name="item_num-{{ item.id }}" value="{{ item.num }}" class="block w-16">
                         	</div>
                         </div>
                         <div class="mr-2">

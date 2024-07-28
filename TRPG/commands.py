@@ -333,7 +333,7 @@ def getstatus(unit_name,status_name):
             status_value = 0
             log_message = f"{unit_name}に'{status_name}'というステータスは存在しません"
         if unit.type == "魔物":
-            log_message = f"魔物のステータスは参照できません。"
+            log_message = f"魔物のステータスは閲覧できません。"
         
     return log_message,status_value
 
@@ -514,7 +514,7 @@ def fixattack(type,value):
                     log_message = log_message + message
                 elif type == "魔法":
                     damage_value = maindamage // 2
-                    message = f" {target}は抵抗しました。"
+                    message = f" {target}は抵抗しました。{target}に{damage_value}のダメージを与えます。"
                     log_message = log_message + message
                     actualdamage = (damage_value - defence) * (-1)
                     if actualdamage > 0:
@@ -1056,7 +1056,7 @@ def heal(unit_name,value):
             status_value = 0
             log_message = f"{unit_name}にHPというステータスは存在しません"
         if unit.type == "魔物":
-            log_message = f"魔物のステータスは参照できません。"
+            log_message = f"魔物のステータスは閲覧できません。"
         
     return log_message,status_value
 
