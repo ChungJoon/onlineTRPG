@@ -352,6 +352,7 @@ class Unit(db.Model):
     回復ボーナス = db.Column(db.Integer, default=0, nullable=True)
     魔法行使判定 = db.Column(db.Integer, default=0, nullable=True)
     魔法耐性 = db.Column(db.Integer, default=0, nullable=True)
+    カウンター = db.Column(db.Integer, default=0, nullable=True)
 
     def __repr__(self):
         return f"Unit(id={self.id}, name='{self.name}')"

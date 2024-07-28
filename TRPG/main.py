@@ -772,7 +772,7 @@ def command(character_id):
     if request.method == 'POST':
         code_input = request.form.get('code_input', '').strip()  # None の場合は空文字列を使用
         actor =  character.label
-        target = ["コマンドテスト用"]
+        target = ["コマンドテストユニット"]
 
         if code_input:  # 空でない場合のみ処理を実行
             result = execute_code(code_input,actor,target)
@@ -1254,6 +1254,12 @@ def commandlist(character_id):
             'details': 'ターゲットに対する魔法攻撃を行い、ダメージ値を取得する。'
         },
         {
+            'name': 'magical_attack_cpu(critical,mpower,mp)',
+            'description': 'critical:クリティカル値, mpower:魔法の威力, mp:消費MP',
+            'return': 'ダメージ値',
+            'details': 'デフォルトの魔力値を使い、クリティカル値も指定してターゲットに対する魔法攻撃を行い、ダメージ値を取得する。'
+        },
+        {
             'name': 'shoot_attack(power,weapon_id)',
             'description': 'power:武器の威力, weapon_id:使用する武器のID',
             'return': 'ダメージ値',
@@ -1396,6 +1402,12 @@ def commandlist(character_id):
             'description': 'mystatus:自分が参照するステータス値,targetstatus:相手が参照するステータス',
             'return': 'True/False',
             'details': 'お互いのステータスを参照して挑戦（命中や魔法など）'
+        },
+        {
+            'name': 'challenge_attack(type,bonus)',
+            'description': 'type:物理か魔法か,bonus:補正値',
+            'return': 'True/False',
+            'details': '物理の時はbonus対回避、魔法の時はbonus対精神抵抗で判定'
         },
         {
             'name': 'getjoblevel(unit_name,jobname)',

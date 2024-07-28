@@ -95,8 +95,10 @@ def execute_single_command(command):
     divide_command_pattern = r'^divide\((\d+),(\d+)\)$'
     # challenge(x,y) コマンドを処理する
     challenge_command_pattern = r'^challenge\((\w+),\s*(\w+)\)$'
-    # challenge(x,y) コマンドを処理する
+    # challenge_status(x,y) コマンドを処理する
     challenge_status_command_pattern = r'^challenge_status\((\w+),\s*(\w+)\)$'
+    # challenge_attack(x,y) コマンドを処理する
+    challenge_attack_command_pattern = r'^challenge_attack\((\w+),\s*(\w+)\)$'
     # getmax(x,y) コマンドを処理する
     getmax_command_pattern = r'^getmax\((\d+(?:,\s*\d+)*)\)$'
     # getmin(x,y) コマンドを処理する
@@ -107,6 +109,8 @@ def execute_single_command(command):
     physical_attack_command_pattern = r'^physical_attack\((\d+)\)$'
     # magical_attack(x,y) コマンドを処理する
     magical_attack_command_pattern = r'^magical_attack\(([^,]+),\s*([^,]+),\s*([^,]+)\)$'
+    # magical_attack_cpu(x,y) コマンドを処理する
+    magical_attack_cpu_command_pattern = r'^magical_attack_cpu\(([^,]+),\s*([^,]+),\s*([^,]+)\)$'
     # monstercriticalloop(x) コマンドを処理する
     monstercriticalloop_command_pattern = r'^monstercriticalloop\((\d+)\)$'
     # getweapon(x,y) コマンドを処理する
@@ -125,7 +129,13 @@ def execute_single_command(command):
     getjoblevel_command_pattern = r'^getjoblevel\(([^,]+),\s*([^,]+)\)$'
     # fixattack(攻撃タイプ, ダメージ量) コマンドの正規表現パターン
     fixattack_command_pattern = r'^fixattack\(([^,]+),\s*([^,]+)\)$'
+    # setcounter(攻撃タイプ, ダメージ量) コマンドの正規表現パターン
+    setcounter_command_pattern = r'^setcounter\(([^,]+),\s*([^,]+)\)$'
 
+    match = re.match(setcounter_command_pattern, command)
+    if match:
+        return setcounter(match.group(1), match.group(2))
+    
     match = re.match(power_command_pattern, command)
     if match:
         return power(match.group(1), match.group(2))
@@ -204,6 +214,11 @@ def execute_single_command(command):
         log_message, value, _ = challenge_status(match.group(1), match.group(2))
         return log_message, value
     
+    match = re.match(challenge_attack_command_pattern, command)
+    if match:
+        log_message, value, _ = challenge_attack(match.group(1), match.group(2))
+        return log_message, value
+
     match = re.match(getmax_command_pattern, command)
     if match:
         return getmax(match.group(1))
@@ -223,6 +238,10 @@ def execute_single_command(command):
     match = re.match(magical_attack_command_pattern, command)
     if match:
         return magical_attack(match.group(1),match.group(2),match.group(3))
+    
+    match = re.match(magical_attack_cpu_command_pattern, command)
+    if match:
+        return magical_attack_cpu(match.group(1),match.group(2),match.group(3))
     
     match = re.match(monstercriticalloop_command_pattern, command)
     if match:
@@ -440,7 +459,13 @@ def monsterattack(critical, additionaldamage):
     critical_value = int(critical)
 
     # 命中判定
-    message, bool, dicevalue = challenge_status("命中","回避")
+    Accuracy = int(getstatus(Actor,"命中")[1])
+    message, bool, dicevalue = challenge_attack("物理",Accuracy)
+    # カウンター発動時
+    if dicevalue == 100:
+        log_message = message
+        damage_value = 0
+        return log_message, damage_value
     log_message += message
 
     # クリティカル計算
@@ -472,10 +497,15 @@ def fixattack(type,value):
     # 命中判定
     if type == "物理":
         Accuracy = int(getstatus(Actor,"命中")[1])
-        message, bool, dicevalue = challenge(Accuracy,"回避")
+        message, bool, dicevalue = challenge_attack(type,Accuracy)
+        # カウンター発動時
+        if dicevalue == 100:
+            log_message = message
+            damage_value = 0
+            return log_message, damage_value
     elif type == "魔法":
         magicchallenge = int(getstatus(Actor,"魔力")[1])
-        message, bool, dicevalue = challenge(magicchallenge,"精神抵抗")
+        message, bool, dicevalue = challenge_attack(type,magicchallenge)
     else:
         log_message = "タイプは物理か魔法です。"
         damage_value = 0
@@ -509,7 +539,6 @@ def fixattack(type,value):
                 log_message = log_message + message
             else:
                 if type == "物理":
-                    damage_value = maindamage // 2
                     message = f" {target}は回避しました。"
                     log_message = log_message + message
                 elif type == "魔法":
@@ -616,6 +645,19 @@ def getsum(numlist):
     log_message = f' {numbers}の合計値は{sum_value}です。'
     return log_message, sum_value
 
+def dicebool(mydice,tdice,myvalue,tvalue):
+    if int(mydice) == 2:
+        bool = False
+    elif int(tdice) == 12:
+        bool = False
+    elif int(mydice) == 12 and int(tdice) != 12 :
+        bool = True
+    elif int(mydice) != 2 and int(tdice) == 2:
+        bool = True
+    else:
+        bool = myvalue > tvalue
+
+    return bool
 
 def challenge_status(mystatus,targetstatus):
     mybonus = getstatus(Actor,mystatus)[1]
@@ -634,18 +676,8 @@ def challenge_status(mystatus,targetstatus):
         message,tdice = dice(2,6)
         tvalue = int(targetbonus) + int(tdice)
         tresult = message
-
-        if int(mydice) == 2:
-            bool = False
-        elif int(tdice) == 12:
-            bool = False
-        elif int(mydice) == 12 and int(tdice) != 12 :
-            bool = True
-        elif int(mydice) != 2 and int(tdice) == 2:
-            bool = True
-        else:
-            bool = myvalue > tvalue
-
+        
+        bool = dicebool(mydice,tdice,myvalue,tvalue)
         challengebool[target] = bool
 
         if getstatus(target,"type")[1] == "魔物":
@@ -673,17 +705,7 @@ def challenge(bonus,targetstatus):
         tvalue = int(targetbonus) + int(tdice)
         tresult = message
 
-        if int(mydice) == 2:
-            bool = False
-        elif int(tdice) == 12:
-            bool = False
-        elif int(mydice) == 12 and int(tdice) != 12 :
-            bool = True
-        elif int(mydice) != 2 and int(tdice) == 2:
-            bool = True
-        else:
-            bool = myvalue > tvalue
-
+        bool = dicebool(mydice,tdice,myvalue,tvalue)
         challengebool[target] = bool
 
         if getstatus(target,"type")[1] == "魔物":
@@ -693,62 +715,246 @@ def challenge(bonus,targetstatus):
             print(log_message)
     return log_message, bool, mydice
 
+def challenge_attack(type,bonus):
+    mybonus = int(bonus)
+    message,mydice = dice(2,6)
+    myvalue = int(mybonus) + int(mydice)
+    myresult = message
+
+    if getstatus(Actor,"type")[1] == "魔物":
+        log_message = f" << {Actor}の{myresult} >> "
+    else:
+        log_message = f" << {Actor}の{myresult} 補正値:{mybonus} 判定値:{myvalue} >> "
+    
+    if type == "物理":
+        targetstatus = "回避"
+    elif type == "魔法": 
+        targetstatus = "精神抵抗"
+    else:
+        log_message = "typeに物理か魔法を指定してください。"
+        bool = False
+        mydice = 2
+        return log_message, bool, mydice 
+    
+    for target in Targets:
+        t_counter = getstatus(target,"カウンター")[1]
+        targetbonus = getstatus(target,targetstatus)[1]
+        if type == "物理" and int(t_counter) > 0:
+            message, bool, tdice = CalCounter(target,t_counter,mydice,myvalue)
+            log_message += message
+            # カウンターの解除
+            setcounter(target,0)
+            if bool == True:
+                # ダメージ結果
+                weaponpower = getweapon(t_counter,"威力")[1]
+                weaponcritical = getweapon(t_counter,"クリティカル")[1]
+                weapondamage = getweapon(t_counter,"追加ダメージ")[1]
+                criticalbonus = getstatus(target,"クリティカルボーナス")[1]
+                basicdamage = getstatus(target,"基本ダメージ")[1]
+
+                powerdamage = power(int(weaponpower),int(tdice))[1]
+                maindamage = int(basicdamage) + int(weapondamage) + powerdamage
+                damage_value = maindamage
+
+                message = f"  基礎ダメージ:{maindamage}"
+                log_message += message
+
+                # クリティカル計算
+                critical_line = int(weaponcritical) - int(criticalbonus)
+                if tdice >= int(critical_line):
+                    message, cvalue = criticalloop(critical_line,weaponpower)
+                    damage_value = maindamage + cvalue
+                    log_message += " クリティカル計算:" + message
+                
+                message = f" {Actor}に{damage_value}のダメージを与えます。"
+                log_message += message
+                defence = getstatus(Actor,"防護点")[1]
+                actualdamage = (damage_value - defence) * (-1)
+                if actualdamage > 0:
+                    actualdamage = 0
+                message, newHP = setstatus(Actor,"HP",actualdamage)
+                mydice = 100
+                challengebool[target] = False
+                return log_message, bool, mydice 
+            
+            elif bool == False:
+                mydice = 12
+                log_message += " カウンターに失敗しました。"
+                bool = True
+                challengebool[target] = bool
+                return log_message, bool, mydice
+
+        else:
+            message,tdice = dice(2,6)
+            tvalue = int(targetbonus) + int(tdice)
+            tresult = message
+
+        bool = dicebool(mydice,tdice,myvalue,tvalue)
+        challengebool[target] = bool
+
+        if getstatus(target,"type")[1] == "魔物":
+            log_message = log_message + f" << {target}の{tresult},判定:{bool} >> "
+        else:
+            log_message = log_message + f" << {target}の{tresult} 補正値:{targetbonus} 判定値:{tvalue} 判定:{bool} >>"
+    return log_message, bool, mydice
+
+def CalCounter(target,weapon_id,mydice,myvalue):
+    from dataclass import Weapon,coalesce
+    from sqlalchemy import func
+
+    log_message = f' {target}がカウンターの判定を行います。'
+    Accuracy = getstatus(target,"命中")[1]
+    WeaponAccuracy = db.session.query(func.sum(Weapon.命中)).filter_by(id=weapon_id).scalar()
+    targetbonus = coalesce(WeaponAccuracy) + int(Accuracy)
+
+    message,tdice = dice(2,6)
+    tvalue = int(targetbonus) + int(tdice)
+    tresult = message
+
+    bool = dicebool(tdice,mydice,tvalue,myvalue)
+    challengebool[target] = bool
+
+    if getstatus(target,"type")[1] == "魔物":
+        log_message += f" << {target}の{tresult},判定:{bool} >> "
+    else:
+        log_message += f" << {target}の{tresult} 補正値:{targetbonus} 判定値:{tvalue} 判定:{bool} >>"
+    
+    return log_message, bool, mydice
+
+def setcounter(unit_name,weapon_id):
+    from dataclass import Weapon,Unit
+    unit = Unit.query.filter_by(name=unit_name).first()
+    unit.カウンター = weapon_id
+    db.session.add(unit)
+    db.session.commit()
+
+    log_message = f" {unit_name}がカウンターの構えを取りました。"
+
+    return log_message, weapon_id
 
 def physical_attack(weapon_id):
     from dataclass import Weapon,Unit
     
-    try:
-        # 基本ダメージ計算
-        basicdamage = getstatus(Actor,"基本ダメージ")[1]
-        weapondamage = getweapon(weapon_id,"追加ダメージ")[1]
-        if weapondamage is None:
-            weapondamage = 0
-        weaponpower = getweapon(weapon_id,"威力")[1]
-        weaponcritical = getweapon(weapon_id,"クリティカル")[1]
-        criticalbonus = getstatus(Actor,"クリティカルボーナス")[1]
+    # try:
+    # 基本ダメージ計算
+    basicdamage = getstatus(Actor,"基本ダメージ")[1]
+    weapondamage = getweapon(weapon_id,"追加ダメージ")[1]
+    if weapondamage is None:
+        weapondamage = 0
+    weaponpower = getweapon(weapon_id,"威力")[1]
+    weaponcritical = getweapon(weapon_id,"クリティカル")[1]
+    criticalbonus = getstatus(Actor,"クリティカルボーナス")[1]
 
-        damage = int(basicdamage) + int(weapondamage)
-        log_message = f"武器威力:{weaponpower} 基本追加ダメージ:{damage}"
+    damage = int(basicdamage) + int(weapondamage)
+    log_message = f"武器威力:{weaponpower} 基本追加ダメージ:{damage}"
 
-        # 命中判定
-        Accuracy = int(getstatus(Actor,"命中")[1]) + int(getweapon(weapon_id,"命中")[1])
-        message, bool, dicevalue = challenge(Accuracy,"回避")
-        log_message += message
+    # 命中判定
+    Accuracy = int(getstatus(Actor,"命中")[1]) + int(getweapon(weapon_id,"命中")[1])
+    message, bool, dicevalue = challenge_attack("物理",Accuracy)
+    log_message += message
+    # カウンター発動時
+    if dicevalue == 100:
+        log_message = message
+        damage_value = 0
+        return log_message, damage_value
 
-        # ダメージ結果
-        powerdamage = power(int(weaponpower),int(dicevalue))[1]
-        maindamage = int(basicdamage) + int(weapondamage) + powerdamage
-        damage_value = maindamage
+    # ダメージ結果
+    powerdamage = power(int(weaponpower),int(dicevalue))[1]
+    maindamage = int(basicdamage) + int(weapondamage) + powerdamage
+    damage_value = maindamage
 
-        message = f"  基礎ダメージ:{powerdamage}"
-        log_message += message
+    message = f"  基礎ダメージ:{maindamage}"
+    log_message += message
 
-        # クリティカル計算
-        critical_line = int(weaponcritical) - int(criticalbonus)
-        if dicevalue >= int(critical_line):
-            message, cvalue = criticalloop(critical_line,weaponpower)
+    # クリティカル計算
+    critical_line = int(weaponcritical) - int(criticalbonus)
+    if dicevalue >= int(critical_line):
+        message, cvalue = criticalloop(critical_line,weaponpower)
+        damage_value = maindamage + cvalue
+        log_message += "クリティカル計算:" + message
+
+    # ターゲットに対するダメージ計算
+    for target in Targets:
+        if challengebool[target] == True:
+            message = f" {target}に{damage_value}のダメージを与えます。"
+            log_message += message
+
+            defence = getstatus(target,"防護点")[1]
+            actualdamage = (damage_value - defence) * (-1)
+            if actualdamage > 0:
+                actualdamage = 0
+            message, newHP = setstatus(target,"HP",actualdamage)
+        else:
+            message = f" {target}は回避しました。"
+            log_message += message
+
+    # except Exception as e:
+        # log_message += f"\nエラーが発生しました: {str(e)}"
+
+    return log_message, damage_value
+
+def magical_attack_cpu(critical,mpower,mp):
+    log_message = f" MPを{mp}消費します。"
+    # MP消費
+    mp = int(mp)
+    mp = -mp
+
+    message, newHP = setstatus(Actor,"MP",mp)
+    log_message += message
+
+    # 魔力
+    magicpower = getstatus(Actor,"魔力")[1]
+    magicpower = int(magicpower)
+
+    log_message += f" 魔法威力:{mpower} 魔力:{magicpower}"
+
+    # 抵抗判定
+    magicchallenge = magicpower
+    message, bool, dicevalue = challenge_attack("魔法",magicchallenge)
+    log_message += message
+
+    # ダメージ結果
+    powerdamage = power(int(mpower),int(dicevalue))[1]
+    # 魔力＋威力のダイスダメージ
+    maindamage = magicpower + powerdamage
+    damage_value = maindamage
+
+    cvalue=0
+    # クリティカル計算
+    critical_line = int(critical)
+    if dicevalue >= int(critical_line):
+        message, cvalue = criticalloop(critical_line,mpower)
+        log_message += " クリティカル計算:" + message
+
+    # ターゲットに対するダメージ計算
+    for target in Targets:
+        defence = getstatus(target,"魔法耐性")[1]
+        if challengebool[target] == True:
             damage_value = maindamage + cvalue
-            log_message += "クリティカル計算:" + message
+            message = f"  {target}に{damage_value}のダメージを与えます。"
+            log_message += message
+            actualdamage = (damage_value - defence) * (-1)
+            if actualdamage > 0:
+                actualdamage = 0
+            message, newHP = setstatus(target,"HP",actualdamage)
+            
+        else:
+            if dicevalue == 2:
+                damage_value = 0
+                message = f"  {target}への魔法は自動失敗しました。"
+                log_message = log_message + message
+            else:
+                damage_value = maindamage // 2
+                message = f"  {target}に{damage_value}の半減ダメージを与えます。"
+                log_message = log_message + message
 
-        # ターゲットに対するダメージ計算
-        for target in Targets:
-            if challengebool[target] == True:
-                message = f" {target}に{damage_value}のダメージを与えます。"
-                log_message += message
-
-                defence = getstatus(target,"防護点")[1]
                 actualdamage = (damage_value - defence) * (-1)
                 if actualdamage > 0:
                     actualdamage = 0
                 message, newHP = setstatus(target,"HP",actualdamage)
-            else:
-                message = f" {target}は回避しました。"
-                log_message += message
-
-    except Exception as e:
-        log_message += f"\nエラーが発生しました: {str(e)}"
 
     return log_message, damage_value
+
 
 def magical_attack(mpower,mp,magictype):
     from dataclass import Unit,UserMagic
@@ -774,7 +980,7 @@ def magical_attack(mpower,mp,magictype):
 
     # 抵抗判定
     magicchallenge = magicpower + int(unit.魔法行使判定)
-    message, bool, dicevalue = challenge(magicchallenge,"精神抵抗")
+    message, bool, dicevalue = challenge_attack("魔法",magicchallenge)
     log_message += message
 
     # ダメージ結果
@@ -983,7 +1189,7 @@ def criticalloop(critical,powerscore):
     log_message, dvalue = dice(2,6)
     message, score = power(powerscore,dvalue)
     log_message = log_message + message
-    if dvalue > critical:
+    if dvalue >= critical:
         message, cvalue = criticalloop(critical,powerscore)
         log_message = log_message + message
         bonus = int(score) + cvalue
